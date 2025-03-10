@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role
+  casualLeave  Int  @default(12)
+  earnedLeave Int   @default(15)
+  medicalLeave Int  @default(10)
+  academicLeave Int  @default(15)
+}
+
+
+model Record {
+  id Int @id @default(autoincrement())
+  username String 
+  name String @unique
+  stage stage
+  type leaveType
+  from DateTime
+  to DateTime
+  status status @default(awaiting)
+  reqMessage String @default("")
+  rejMessage String @default("")
+}
+enum status {
+  awaiting
+  accepted
+  rejected
+}
+
+enum stage {
+ FACULTY
+ HOD
+ DIRECTOR
+}
+enum leaveType {
+  casual
+  earned
+  medical
+  academic
+}
+
+
+
+enum Role {
+ FACULTY
+ HOD
+ DIRECTOR
+}
