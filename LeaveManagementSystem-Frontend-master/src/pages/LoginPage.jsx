@@ -1,22 +1,20 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   FormControl,
-  FormLabel,
-  FormErrorMessage,
-  FormHelperText,
   Input,
   InputGroup,
   InputRightElement,
   Button,
+  useToast,
 } from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import { useToast } from "@chakra-ui/react";
 import { CgLogIn } from "react-icons/cg";
-import { MdOutlineVisibility } from "react-icons/md";
-import { MdOutlineVisibilityOff } from "react-icons/md";
-import { login } from "../utils/functions/authentication";
+import { MdOutlineVisibility, MdOutlineVisibilityOff } from "react-icons/md";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import logo from "../images/login/logo.png";
+import bgImage from "../images/login/vector.png";
+import avatarIcon from "../images/login/avatar.png";
+import { login } from "../utils/functions/authentication";
 
 function Login() {
   const toast = useToast();
@@ -36,7 +34,6 @@ function Login() {
         isClosable: true,
       });
     },
-
     onSuccess: () => {
       toast({
         position: "top-right",
@@ -53,64 +50,70 @@ function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (email === "" || password === "") {
-      setEmail("");
-      setPassword("");
-      return;
-    } else {
-      mutate({ username: email, password: password });
-    }
+    if (email === "" || password === "") return;
+    mutate({ username: email, password: password });
   };
 
   return (
-    <div className="flex justify-center items-center w-screen h-screen">
+    <div className="flex justify-center items-center w-screen h-screen relative overflow-hidden">
       <div
-        className="flex w-2/5 h-1/2 min-w-[300px] min-h-[300px] flex-col justify-center items-center bg-slate-50 
-      rounded-2xl
-      px-10
-      py-5
-      "
-      >
-        <form onSubmit={handleSubmit}>
-          <FormControl className="flex flex-col items-center w-100 h-100 gap-4">
-            <p className="text-4xl text-blue-600">Login</p>
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "blur(5px) brightness(0.75)",
+        }}
+      ></div>
 
+      <div className="absolute inset-0 bg-black/20"></div>
+
+      <div className="relative flex flex-col w-[95%] max-w-[480px] p-10 bg-white bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-2xl text-center border border-gray-300">
+        <img src={logo} alt="Manipal University Logo" className="w-44 self-start mb-6 mix-blend-multiply" />
+
+        <img src={avatarIcon} alt="User Avatar" className="w-24 h-24 rounded-full mx-auto mb-6 bg-gray-700 p-3 shadow-lg" />
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <FormControl>
             <Input
-              placeholder="Email"
+              placeholder="Username"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              isRequired={true}
+              className="rounded-full p-5 text-xl bg-white bg-opacity-80 text-gray-700 border border-gray-300 shadow-md 
+                         placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-400"
             />
-
-            <InputGroup>
-              <Input
-                type={show ? "text" : "password"}
-                placeholder="Password"
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                }}
-                value={password}
-                isRequired={true}
-              />
-              <InputRightElement width="3rem">
-                {show ? (
-                  <MdOutlineVisibilityOff onClick={() => setShow(false)} />
-                ) : (
-                  <MdOutlineVisibility onClick={() => setShow(true)} />
-                )}
-              </InputRightElement>
-            </InputGroup>
-
-            {isPending ? (
-              <Button colorScheme="blue" isLoading rightIcon={<CgLogIn />}>
-                Login
-              </Button>
-            ) : (
-              <Button colorScheme="blue" type="submit" rightIcon={<CgLogIn />}>
-                Login
-              </Button>
-            )}
           </FormControl>
+
+          <InputGroup>
+            <Input
+              type={show ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="rounded-full p-5 text-xl bg-white bg-opacity-80 text-gray-700 border border-gray-300 shadow-md 
+                         placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-400"
+            />
+            <InputRightElement>
+              {show ? (
+                <MdOutlineVisibilityOff className="cursor-pointer text-gray-600 text-2xl" onClick={() => setShow(false)} />
+              ) : (
+                <MdOutlineVisibility className="cursor-pointer text-gray-600 text-2xl" onClick={() => setShow(true)} />
+              )}
+            </InputRightElement>
+          </InputGroup>
+
+          <p className="text-sm text-gray-500 cursor-pointer hover:underline">Forgot Password?</p>
+
+          <Button
+            type="submit"
+            className="rounded-full p-5 text-xl font-semibold bg-gradient-to-r from-[#E65100] to-[#FF6D00] 
+                       text-white hover:from-[#D84315] hover:to-[#F4511E] hover:scale-105 transition-all 
+                       duration-300 shadow-lg hover:shadow-xl active:scale-95 w-full"
+            isLoading={isPending}
+            rightIcon={<CgLogIn size={24} />}
+          >
+            Login
+          </Button>
         </form>
       </div>
     </div>

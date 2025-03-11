@@ -30,7 +30,7 @@ const ApplicationComponent = (data) => {
       status: "success",
       duration: 1000,
       isClosable: true,
-      position: "top-right",
+      position: "top-right",  
     });
 
     setTimeout(() => {
