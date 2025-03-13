@@ -47,6 +47,10 @@ function DrawerComponent() {
             <div className="flex items-center w-full bg-slate-500 justify-between py-3 px-4">
               <Button
                 onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("role");
+                  localStorage.removeItem("userData");
+                  localStorage.removeItem("username");
                   navigate("/login");
                 }}
                 colorScheme="teal"

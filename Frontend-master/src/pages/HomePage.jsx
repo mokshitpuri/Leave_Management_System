@@ -3,15 +3,33 @@ import { useQuery } from "@tanstack/react-query";
 import { loggedInUser } from "../utils/functions/user";
 import { Spinner, Image, Table, Thead, Tbody, Tr, Th, Td, TableContainer, Box } from "@chakra-ui/react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
+import { leaveStats, leaveRecord } from "../utils/functions/leave";
 import LeaveComponent from "../components/LeaveComponent";
 
 const COLORS = ["#1565C0", "#90CAF9"];
-
 const Home = () => {
   const { isLoading, error, data } = useQuery({
     queryFn: loggedInUser,
     queryKey: ["loggedInUser"],
   });
+
+  const { isLoading: leaveStatsLoading, error: leaveStatsError, data: leaveStatsData } = useQuery({
+    queryFn: leaveStats,
+    queryKey: ["leaveStats"],
+  });
+  const { isLoading: leavesLoading, error: leavesError, data: leavesData } = useQuery({
+    queryFn: leaveRecord,
+    queryKey: ["leaveRecord"],
+
+    onSuccess: (data) => {
+      console.log(data);
+    }
+
+   
+  });
+  
+  console.log(leaveStatsData);
+  
 
   if (isLoading) {
     return (
@@ -20,7 +38,7 @@ const Home = () => {
       </div>
     );
   }
-
+  
   // ✅ Prevent accessing undefined properties
   const leaveRecords = data?.leaveRecords || [];
 
@@ -137,13 +155,13 @@ const Home = () => {
         <div className="mt-6 p-4 bg-gray-100 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-gray-700">Leave Summary</h3>
           <p className="text-gray-600 mt-2">
-            Total Leave Requests: <span className="font-bold">{leaveRecords.length}</span>
+            Total Leave Requests: <span className="font-bold">{leaveStatsData?.totalLeaves}</span>
           </p>
           <p className="text-gray-600">
-            Approved Leaves: <span className="font-bold">{leaveRecords.filter(l => l.status === "accepted").length}</span>
+            Approved Leaves: <span className="font-bold">{leaveStatsData?.approvedLeaves}</span>
           </p>
           <p className="text-gray-600">
-            Pending Approvals: <span className="font-bold">{leaveRecords.filter(l => l.status === "awaiting").length}</span>
+            Pending Approvals: <span className="font-bold">{leaveStatsData?.pendingLeaves}</span>
           </p>
         </div>
       </div>

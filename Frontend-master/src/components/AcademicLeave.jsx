@@ -142,7 +142,10 @@ const AcademicLeave = () => {
             onChange={(date) => handleEndDateChange(date)}
             popperPlacement="top-end"
             minDate={formik.values.from.toDate()}
-            maxDate={moment(formik.values.from).add(4, "days").toDate()}
+            maxDate={moment(formik.values.from).add(
+              Math.min(4, JSON.parse(localStorage.getItem('userData'))?.academicLeave || 0),
+              "days"
+            ).toDate()}
           />
         </div>
       </div>

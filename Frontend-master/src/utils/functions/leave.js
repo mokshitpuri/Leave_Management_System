@@ -4,11 +4,21 @@ export async function leaveRecord() {
   return api
     .get("/leave/getLeaves")
     .then((response) => {
-      if (response.data.body === undefined || response.data.body === null) {
-        throw new Error("No record Found");
-      } else {
         return response.data.body;
-      }
+
+    })
+    .catch((error) => {
+      return Promise.reject(error);
+    });
+}
+
+export async function leaveStats() {
+  return api
+    .get("/leave/leave-stats")
+    .then((response) => {
+  
+        return response.data.data;
+      
     })
     .catch((error) => {
       return Promise.reject(error);

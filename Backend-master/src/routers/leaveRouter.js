@@ -9,6 +9,8 @@ const {
   updateStatus,
   updateleaves,
 } = require("../functions/prismaFunction");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 // prefix string
 // /leave/
@@ -184,5 +186,55 @@ leaveRouter.get(
     }
   }
 );
+
+leaveRouter.get('/leave-stats', authenticate, getUserInfo, async (req, res) => {
+  try {
+     let username = req.userInfo.username;
+
+      // Get total leaves
+      let totalLeaves = await prisma.record.count({
+          where: {
+              username: username
+          }
+      });
+
+      // Get approved leaves
+      let approvedLeaves = await prisma.record.count({
+          where: {
+              username: username,
+              status: 'accepted'
+          }
+      });
+
+      // Get pending leaves
+      let pendingLeaves = await prisma.record.count({
+          where: {
+              username: username,
+              status: 'awaiting'
+          }
+      });
+
+      res.status(200).json({
+          success: true,
+          data: {
+              totalLeaves,
+              approvedLeaves,
+              pendingLeaves
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching leave statistics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch leave statistics',
+            error: error.message
+        });
+    }
+});
+
+
+
+
 
 module.exports = leaveRouter;
