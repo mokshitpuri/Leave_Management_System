@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Drawer,
+  Drawer as ChakraDrawer,
   DrawerBody,
   DrawerFooter,
   DrawerOverlay,
@@ -11,30 +11,42 @@ import {
 import { BiLogOut } from "react-icons/bi";
 import { FaAngleLeft } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
-import DrawerConfig from "./DrawerConfig";
-import drawerContext from "../context/DrawerContext";
+import DrawerContext from "../context/DrawerContext"; // ✅ Corrected import
 
-function DrawerComponent() {
-  const { open, setOpen } = React.useContext(drawerContext);
+function Drawer({ userMenu }) {
+  const { open, setOpen } = React.useContext(DrawerContext);
   const navigate = useNavigate();
 
+  if (!userMenu) return null; // Prevents 'undefined' map error
+
   return (
-    <Drawer placement="left" isOpen={open} onClose={() => setOpen(false)}>
+    <ChakraDrawer placement="left" isOpen={open} onClose={() => setOpen(false)}>
       <DrawerOverlay />
-      <DrawerContent bg="blue.700" color="white">
+      <DrawerContent bg="rgb(43, 66, 100)" color="white">
         <DrawerBody p={0} pt={6}>
-          <Box w="full" h="full" bg="blue.800" p={4}>
-            <DrawerConfig hideHeading />
+          <Box w="full" h="full" p={4}>
+            {userMenu.map((item, index) => (
+              <Button
+                key={index}
+                w="full"
+                justifyContent="start"
+                variant="ghost"
+                colorScheme="whiteAlpha"
+                onClick={() => {
+                  navigate(item.path);
+                  setOpen(false);
+                }}
+              >
+                {item.title}
+              </Button>
+            ))}
           </Box>
         </DrawerBody>
         <DrawerFooter p={0}>
-          <Box w="full" bg="blue.600" display="flex" justifyContent="space-between" alignItems="center" p={4}>
+          <Box w="full" display="flex" justifyContent="space-between" alignItems="center" p={4}>
             <Button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("role");
-                localStorage.removeItem("userData");
-                localStorage.removeItem("username");
+                localStorage.clear();
                 navigate("/login");
               }}
               colorScheme="red"
@@ -45,18 +57,15 @@ function DrawerComponent() {
               Logout
             </Button>
             <Box bg="white" p={1} borderRadius="md">
-              <Button
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
-                <FaAngleLeft size="1.2em" color="blue.700" />
+              <Button variant="ghost" onClick={() => setOpen(false)}>
+                <FaAngleLeft size="1.2em" color="rgb(43, 66, 100)" />
               </Button>
             </Box>
           </Box>
         </DrawerFooter>
       </DrawerContent>
-    </Drawer>
+    </ChakraDrawer>
   );
 }
 
-export default DrawerComponent;
+export default Drawer;

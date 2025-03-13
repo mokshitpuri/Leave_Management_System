@@ -1,5 +1,15 @@
-import React from "react";
+import { createContext, useState } from "react";
 
-const drawerContext = React.createContext();
+const DrawerContext = createContext();
 
-export default drawerContext;
+export const DrawerProvider = ({ children }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <DrawerContext.Provider value={{ open, setOpen }}>
+      {children}
+    </DrawerContext.Provider>
+  );
+};
+
+export default DrawerContext;
