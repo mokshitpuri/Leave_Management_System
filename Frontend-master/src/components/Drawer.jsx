@@ -3,12 +3,10 @@ import {
   Drawer,
   DrawerBody,
   DrawerFooter,
-  DrawerHeader,
   DrawerOverlay,
   DrawerContent,
-  DrawerCloseButton,
-  useDisclosure,
   Button,
+  Box,
 } from "@chakra-ui/react";
 import { BiLogOut } from "react-icons/bi";
 import { FaAngleLeft } from "react-icons/fa6";
@@ -21,59 +19,43 @@ function DrawerComponent() {
   const navigate = useNavigate();
 
   return (
-    <>
-      <Drawer placement="left" isOpen={open}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <div className="w-full py-3 px-4 bg-slate-500">
-            <p className="text-2xl text-center text-white">Dashboard</p>
-          </div>
-          <DrawerBody
-            style={{
-              padding: "0px",
-            }}
-          >
-            <div className="w-full h-full bg-slate-600">
-              {/* // this is the main drawer rendering */}
-              <DrawerConfig />
-            </div>
-          </DrawerBody>
-
-          <DrawerFooter
-            style={{
-              padding: "0px",
-            }}
-          >
-            <div className="flex items-center w-full bg-slate-500 justify-between py-3 px-4">
+    <Drawer placement="left" isOpen={open} onClose={() => setOpen(false)}>
+      <DrawerOverlay />
+      <DrawerContent bg="blue.700" color="white">
+        <DrawerBody p={0} pt={6}>
+          <Box w="full" h="full" bg="blue.800" p={4}>
+            <DrawerConfig hideHeading />
+          </Box>
+        </DrawerBody>
+        <DrawerFooter p={0}>
+          <Box w="full" bg="blue.600" display="flex" justifyContent="space-between" alignItems="center" p={4}>
+            <Button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("role");
+                localStorage.removeItem("userData");
+                localStorage.removeItem("username");
+                navigate("/login");
+              }}
+              colorScheme="red"
+              rightIcon={<BiLogOut />}
+              bg="red.500"
+              _hover={{ bg: "red.600" }}
+            >
+              Logout
+            </Button>
+            <Box bg="white" p={1} borderRadius="md">
               <Button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("role");
-                  localStorage.removeItem("userData");
-                  localStorage.removeItem("username");
-                  navigate("/login");
-                }}
-                colorScheme="teal"
-                rightIcon={<BiLogOut />}
-              >
-                Logout
-              </Button>
-              <button
-                className="hover:bg-slate-400 px-2 py-2 rounded-md"
+                variant="ghost"
                 onClick={() => setOpen(false)}
               >
-                <FaAngleLeft
-                  style={{
-                    fontSize: "1.5em",
-                    color: "white",
-                  }}
-                />
-              </button>
-            </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </>
+                <FaAngleLeft size="1.2em" color="blue.700" />
+              </Button>
+            </Box>
+          </Box>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

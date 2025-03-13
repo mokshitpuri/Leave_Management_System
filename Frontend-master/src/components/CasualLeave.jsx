@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
@@ -7,53 +7,60 @@ import {
   InputLeftAddon,
   InputGroup,
   useToast,
-  position,
+  Stack,
+  Flex,
+  Box,
 } from "@chakra-ui/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import moment from "moment";
 import { useFormik } from "formik";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
 
 const CasualLeave = () => {
+  const [startDate, setStartDate] = useState(moment());
+  const [endDate, setEndDate] = useState(moment());
+  const [maxLeaveDays, setMaxLeaveDays] = useState(12);
   const toast = useToast();
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const remainingLeaves = userData?.CasualLeave || 12;
+    setMaxLeaveDays(Math.min(12, remainingLeaves));
+  }, []);
+
   const mutation = useMutation({
-    mutationFn: (payload) => {
-      return api.post("/leave/apply", payload);
-    },
+    mutationFn: (payload) => api.post("/leave/apply", payload),
   });
 
   const handleSubmit = async (values, actions) => {
-    const { name, message, date, type } = values;
     const payload = {
-      name,
-      reqMessage: message,
-      to: date,
-      from: date,
-      type,
-      days: 1,
+      ...values,
+      from: values.from.format(),
+      to: values.to.format(),
     };
+
     await mutation.mutate(payload);
+
     if (mutation.isSuccess) {
       toast({
         title: "Success",
-        description: "leave created successfully",
+        description: "Leave created successfully",
         status: "success",
         duration: 1000,
         isClosable: true,
         position: "top-right",
       });
 
-      setTimeout(() => {
-        actions.resetForm();
-      }, 1000);
+      setTimeout(() => actions.resetForm(), 1000);
     }
 
     if (mutation.isError) {
-      console.log(mutation.error);
+      console.error(mutation.error);
       toast({
-        title: "failed",
-        description: "failure",
+        title: "Failed",
+        description: "Something went wrong",
         status: "error",
         duration: 1000,
         isClosable: true,
@@ -65,68 +72,131 @@ const CasualLeave = () => {
   const formik = useFormik({
     initialValues: {
       name: "",
-      date: new Date(),
+      from: startDate,
+      to: endDate,
       message: "",
       type: "casual",
+      days: 0,
+      phone: "",
+    },
+    validate: (values) => {
+      const errors = {};
+      if (!/^\d{10}$/.test(values.phone)) {
+        errors.phone = "Phone number must be exactly 10 digits";
+      }
+      const wordCount = values.message.trim().split(/\s+/).length;
+      if (wordCount > 100) {
+        errors.message = "Message cannot exceed 100 words";
+      }
+      return errors;
     },
     onSubmit: handleSubmit,
   });
 
-  const handleDateChange = (date) => {
-    formik.setFieldValue("date", date);
-  };
+  useEffect(() => {
+    if (startDate && endDate) {
+      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1);
+    }
+  }, [startDate, endDate]);
 
   return (
-    <div className="w-full">
-      <form
-        onSubmit={formik.handleSubmit}
-        className="flex flex-col px-2 py-5 justify-center gap-4"
-      >
-        <div>
-          <FormLabel> Leave Name</FormLabel>
+    <form onSubmit={formik.handleSubmit}>
+      <Stack spacing={4}>
+        <Box>
+          <FormLabel fontWeight="bold">Leave Name</FormLabel>
           <Input
+            id="name"
             value={formik.values.name}
             onChange={formik.handleChange}
             placeholder="Enter unique name"
-            id="name"
             isRequired
           />
-        </div>
+        </Box>
 
-        <div>
-          <FormLabel>Date</FormLabel>
-          <DatePicker
-            id="date"
-            className="border rounded-md w-full p-3"
-            selected={formik.values.date}
-            onChange={handleDateChange}
-            minDate={new Date()}
-            popperPlacement="top-end"
-            isRequired
-          />
-        </div>
+        <Box>
+          <FormLabel fontWeight="bold">Days</FormLabel>
+          <Input id="days" value={formik.values.days} isReadOnly />
+        </Box>
 
-        <div>
-          <FormLabel>Message</FormLabel>
+        <Flex justify="space-between">
+          <Box>
+            <FormLabel fontWeight="bold">From</FormLabel>
+            <DatePicker
+              className="border rounded-md p-2"
+              selected={formik.values.from.toDate()}
+              onChange={(date) => {
+                setStartDate(moment(date));
+                formik.setFieldValue("from", moment(date));
+              }}
+              minDate={new Date()}
+            />
+          </Box>
+          <Box>
+            <FormLabel fontWeight="bold">To</FormLabel>
+            <DatePicker
+              className="border rounded-md p-2"
+              selected={formik.values.to.toDate()}
+              onChange={(date) => {
+                setEndDate(moment(date));
+                formik.setFieldValue("to", moment(date));
+              }}
+              minDate={formik.values.from.toDate()}
+              maxDate={moment(formik.values.from)
+                .add(maxLeaveDays - 1, "days")
+                .toDate()}
+            />
+          </Box>
+        </Flex>
+
+        <Box>
+          <FormLabel fontWeight="bold">Reason</FormLabel>
           <Textarea
             id="message"
             value={formik.values.message}
-            onChange={formik.handleChange}
-            placeholder="Enter the reason for leave"
+            onChange={(e) => {
+              const words = e.target.value.trim().split(/\s+/);
+              if (words.length <= 100) {
+                formik.setFieldValue("message", e.target.value);
+              }
+            }}
+            placeholder="Enter the reason for leave (Max 100 words)"
             isRequired
           />
-        </div>
-        <div>
-          <FormLabel>Emergency Contact</FormLabel>
+          {formik.touched.message && formik.errors.message && (
+            <p className="text-red-500 text-sm">{formik.errors.message}</p>
+          )}
+        </Box>
+
+        <Box>
+          <FormLabel fontWeight="bold">Emergency Contact</FormLabel>
           <InputGroup>
             <InputLeftAddon>+91</InputLeftAddon>
-            <Input placeholder="Enter phone number" />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Enter phone number"
+              value={formik.values.phone}
+              onChange={(e) => {
+                const onlyNums = e.target.value.replace(/\D/g, "");
+                if (onlyNums.length <= 10) {
+                  formik.setFieldValue("phone", onlyNums);
+                }
+              }}
+              onBlur={formik.handleBlur}
+              maxLength="10"
+              isInvalid={formik.touched.phone && !!formik.errors.phone}
+            />
           </InputGroup>
-        </div>
+          {formik.touched.phone && formik.errors.phone && (
+            <p className="text-red-500 text-sm">{formik.errors.phone}</p>
+          )}
+        </Box>
 
-        <Button type="submit">Submit</Button>
-      </form>
-    </div>
+        <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>
+          Submit Request
+        </Button>
+      </Stack>
+    </form>
   );
 };
 

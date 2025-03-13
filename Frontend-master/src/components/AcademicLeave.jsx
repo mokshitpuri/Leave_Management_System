@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Button, Input, Textarea, FormLabel, useToast } from "@chakra-ui/react";
+import {
+  Button,
+  Input,
+  Textarea,
+  FormLabel,
+  useToast,
+  Stack,
+  Flex,
+  Box,
+} from "@chakra-ui/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
@@ -8,53 +17,56 @@ import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
 
 const AcademicLeave = () => {
-  const [startDate, setStartDate] = useState(moment());
-  const [endDate, setEndDate] = useState(moment());
+  const today = moment();
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
   const toast = useToast();
 
+  const maxAcademicLeave =
+    JSON.parse(localStorage.getItem("userData"))?.academicLeave || 4;
+
   const mutation = useMutation({
-    mutationFn: (payload) => {
-      return api.post("/leave/apply", payload);
-    },
+    mutationFn: (payload) => api.post("/leave/apply", payload),
   });
 
   const handleSubmit = async (values, actions) => {
-    const { name, reqMessage, from, to, type, days } = values;
-
-    // Format the moment objects into date strings
-    const fromDateString = from.format();
-    const toDateString = to.format();
+    if (values.reqMessage.split(/\s+/).length > 50) {
+      toast({
+        title: "Error",
+        description: "Reason must be within 50 words",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
 
     const payload = {
-      name,
-      reqMessage,
-      to: toDateString,
-      from: fromDateString,
-      type,
-      days,
+      ...values,
+      from: values.from.format(),
+      to: values.to.format(),
     };
-    console.log(payload);
+
     await mutation.mutate(payload);
+
     if (mutation.isSuccess) {
       toast({
         title: "Success",
-        description: "leave created successfully",
+        description: "Academic leave created successfully",
         status: "success",
         duration: 1000,
         isClosable: true,
         position: "top-right",
       });
 
-      setTimeout(() => {
-        actions.resetForm();
-      }, 1000);
+      setTimeout(() => actions.resetForm(), 1000);
     }
 
     if (mutation.isError) {
-      console.log(mutation.error);
       toast({
-        title: "failed",
-        description: "failure",
+        title: "Failed",
+        description: "Request failed",
         status: "error",
         duration: 1000,
         isClosable: true,
@@ -70,97 +82,88 @@ const AcademicLeave = () => {
       to: endDate,
       reqMessage: "",
       type: "academic",
-      days: 0,
+      days: 1,
     },
     onSubmit: handleSubmit,
   });
 
   useEffect(() => {
-    handleCalculateDays();
+    if (startDate && endDate) {
+      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1);
+    }
   }, [startDate, endDate]);
 
-  const handleCalculateDays = () => {
-    if (startDate && endDate) {
-      const diffInDays = endDate.diff(startDate, "days") + 1;
-      formik.setFieldValue("days", diffInDays);
-    } else {
-      formik.setFieldValue("days", 0);
-    }
-  };
-  const handleStartDateChange = (date) => {
-    setStartDate(moment(date));
-    formik.setFieldValue("from", moment(date));
-  };
-  const handleEndDateChange = (date) => {
-    setEndDate(moment(date));
-    formik.setFieldValue("to", moment(date));
-  };
-
   return (
-    <form
-      onSubmit={formik.handleSubmit}
-      className="w-full flex flex-col px-2 py-5 justify-center gap-4"
-    >
-      <div>
-        <FormLabel>Name</FormLabel>
-        <Input
-          id="name"
-          name="name"
-          value={formik.values.name}
-          onChange={formik.handleChange}
-          isRequired
-          placeholder="Enter unique name"
-        />
-      </div>
-      <div>
-        <FormLabel>Days</FormLabel>
-        <Input
-          id="days"
-          name="days"
-          value={formik.values.days}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          isReadOnly
-        />
-      </div>
-      <div className="flex flex-row justify-between">
-        <div>
-          <FormLabel>From</FormLabel>
-          <DatePicker
-            className="border rounded-md"
-            selected={formik.values.from.toDate()}
-            onChange={(date) => handleStartDateChange(date)}
-            popperPlacement="top-end"
-            minDate={new Date()}
+    <form onSubmit={formik.handleSubmit}>
+      <Stack spacing={4}>
+        <Box>
+          <FormLabel fontWeight="bold">Leave Name</FormLabel>
+          <Input
+            id="name"
+            name="name"
+            value={formik.values.name}
+            onChange={formik.handleChange}
+            isRequired
+            placeholder="Enter unique name"
           />
-        </div>
-        <div>
-          <FormLabel>To</FormLabel>
-          <DatePicker
-            className="border rounded-md"
-            selected={formik.values.to.toDate()}
-            onChange={(date) => handleEndDateChange(date)}
-            popperPlacement="top-end"
-            minDate={formik.values.from.toDate()}
-            maxDate={moment(formik.values.from).add(
-              Math.min(4, JSON.parse(localStorage.getItem('userData'))?.academicLeave || 0),
-              "days"
-            ).toDate()}
+        </Box>
+
+        <Box>
+          <FormLabel fontWeight="bold">Days</FormLabel>
+          <Input id="days" name="days" value={formik.values.days} isReadOnly />
+        </Box>
+
+        <Flex justify="space-between">
+          <Box>
+            <FormLabel fontWeight="bold">From</FormLabel>
+            <DatePicker
+              className="border rounded-md p-2"
+              selected={formik.values.from.toDate()}
+              onChange={(date) => {
+                setStartDate(moment(date));
+                formik.setFieldValue("from", moment(date));
+              }}
+              minDate={new Date()}
+            />
+          </Box>
+          <Box>
+            <FormLabel fontWeight="bold">To</FormLabel>
+            <DatePicker
+              className="border rounded-md p-2"
+              selected={formik.values.to.toDate()}
+              onChange={(date) => {
+                setEndDate(moment(date));
+                formik.setFieldValue("to", moment(date));
+              }}
+              minDate={formik.values.from.toDate()}
+              maxDate={moment(formik.values.from)
+                .add(Math.min(maxAcademicLeave, 4), "days")
+                .toDate()}
+            />
+          </Box>
+        </Flex>
+
+        <Box>
+          <FormLabel fontWeight="bold">Reason </FormLabel>
+          <Textarea
+            id="reqMessage"
+            name="reqMessage"
+            isRequired
+            value={formik.values.reqMessage}
+            onChange={(e) => {
+              const words = e.target.value.trim().split(/\s+/);
+              if (words.length <= 50) {
+                formik.setFieldValue("reqMessage", e.target.value);
+              }
+            }}
+            placeholder="Enter the reason for leave (Max 50 words)"
           />
-        </div>
-      </div>
-      <div>
-        <FormLabel>Academic Reason</FormLabel>
-        <Textarea
-          id="reqMessage"
-          name="reqMessage"
-          isRequired
-          value={formik.values.reqMessage}
-          onChange={formik.handleChange}
-          placeholder="Enter the reason for leave"
-        />
-      </div>
-      <Button type="submit">Submit</Button>
+        </Box>
+
+        <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>
+          Submit Request
+        </Button>
+      </Stack>
     </form>
   );
 };
