@@ -7,6 +7,16 @@ import { leaveStats } from "../utils/functions/leave";
 
 const COLORS = ["#1565C0", "#90CAF9"];
 
+
+const facultyImages = {
+  mokshit: "/images/mokshit.jpg",  
+  harshil: "/images/harshil.jpg",  
+  parth: "/images/parth.jpg",     
+};
+
+// Default profile image if username is not found
+const DEFAULT_IMAGE = "/images/user.png";
+
 const Home = () => {
   const { data: userData, isLoading, error } = useQuery({
     queryFn: loggedInUser,
@@ -41,15 +51,19 @@ const Home = () => {
     { name: "Medical Leave", allotted: 10, remaining: userData?.medicalLeave || 0 },
   ];
 
+  // Assign the correct profile image based on the username
+  const profileImage = facultyImages[userData?.username?.toLowerCase()] || DEFAULT_IMAGE;
+
   return (
     <div className="h-full w-full p-6">
       {/* Profile Card */}
       <div className="flex items-center bg-white p-6 shadow-xl rounded-xl space-x-6">
         <Image
-          src="https://bit.ly/dan-abramov"
+          src={profileImage}
           boxSize="100px"
-          alt="profile photo"
+          alt="Profile Photo"
           className="rounded-full shadow-lg border-4 border-blue-400"
+          objectFit= "cover"
         />
         <div>
           <p className="text-3xl font-bold text-gray-900">{userData?.username || "User"}</p>
@@ -99,17 +113,17 @@ const Home = () => {
 
       {/* Leave Summary Section */}
       <div className="mt-8 p-6 bg-white rounded-xl shadow-xl text-center">
-  <h3 className="text-2xl font-bold text-blue-600">Leave Summary</h3>
-  <p className="text-gray-700 mt-2 text-lg">
-    Total Leave Requests: <span className="font-bold text-blue-600">{leaveStatsData?.totalLeaves}</span>
-  </p>
-  <p className="text-gray-700 text-lg">
-    Approved Leaves: <span className="font-bold text-green-600">{leaveStatsData?.approvedLeaves}</span>
-  </p>
-  <p className="text-gray-700 text-lg">
-    Pending Approvals: <span className="font-bold text-yellow-600">{leaveStatsData?.pendingLeaves}</span>
-  </p>
-</div>
+        <h3 className="text-2xl font-bold text-blue-600">Leave Summary</h3>
+        <p className="text-gray-700 mt-2 text-lg">
+          Total Leave Requests: <span className="font-bold text-blue-600">{leaveStatsData?.totalLeaves}</span>
+        </p>
+        <p className="text-gray-700 text-lg">
+          Approved Leaves: <span className="font-bold text-green-600">{leaveStatsData?.approvedLeaves}</span>
+        </p>
+        <p className="text-gray-700 text-lg">
+          Pending Approvals: <span className="font-bold text-yellow-600">{leaveStatsData?.pendingLeaves}</span>
+        </p>
+      </div>
     </div>
   );
 };
