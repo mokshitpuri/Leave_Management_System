@@ -22,45 +22,33 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
   let rejMessage = undefined;
   let { type, name, from, to, reqMessage, days } = req.body;
 
+  if (!type || !name || !from || !to || !reqMessage || !days) {
+    return res.status(400).json({ error: { msg: "All fields are required" } });
+  }
+
   switch (type) {
     case "casual":
       if (req.userInfo.casualLeave < days) {
-        return res.status(400).json({
-          error: {
-            msg: "Not sufficient leaves",
-          },
-        });
+        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
       }
       break;
     case "medical":
       if (req.userInfo.medicalLeave < days) {
-        return res.status(400).json({
-          error: {
-            msg: "Not sufficient leaves",
-          },
-        });
+        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
       }
       break;
     case "earned":
       if (req.userInfo.earnedLeave < days) {
-        return res.status(400).json({
-          error: {
-            msg: "Not sufficient leaves",
-          },
-        });
+        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
       }
       break;
     case "academic":
       if (req.userInfo.academicLeave < days) {
-        return res.status(400).json({
-          error: {
-            msg: "Not sufficient leaves",
-          },
-        });
+        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
       }
       break;
     default:
-      break;
+      return res.status(400).json({ error: { msg: "Invalid leave type" } });
   }
 
   try {
@@ -75,15 +63,18 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
       reqMessage,
       rejMessage,
     });
+
     await updateleaves(req.userInfo, days, type);
+
     res.status(201).json({
       success: true,
-      msg: "leave applied success",
+      msg: "Leave applied successfully",
       body: record,
     });
   } catch (error) {
+    console.error("Error posting leave:", error);
     return res.status(500).json({
-      error: `failed to post leave :- ${error}`,
+      error: `Failed to post leave: ${error.message}`,
     });
   }
 });
@@ -96,145 +87,88 @@ leaveRouter.get("/getLeaves", authenticate, getUserInfo, async (req, res) => {
       body: leaves,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching leaves:", error);
     res.status(500).json({
-      msg: "Internal server Error",
-      error: error,
+      msg: "Internal server error",
+      error: error.message,
     });
   }
 });
 
-leaveRouter.get(
-  "/getApplications",
-  authenticate,
-  getUserInfo,
-  async (req, res) => {
-    let applications = undefined;
-    try {
-      let role = req.userInfo.role;
-      if (role === "FACULTY") {
-        res.status(400).json({
-          success: false,
-          msg: "Not authorized for this operation",
-        });
-      }
-      if (role === "HOD") {
-        applications = await getApplications("FACULTY");
-      }
-      if (role === "DIRECTOR") {
-        applications = await getApplications("HOD");
-      }
-
-      res.status(200).json({
-        success: true,
-        body: applications,
-      });
-    } catch (error) {
-      res.status(502).json({
-        success: false,
-        body: error,
-      });
+leaveRouter.get("/getApplications", authenticate, getUserInfo, async (req, res) => {
+  try {
+    let role = req.userInfo.role;
+    if (role === "FACULTY") {
+      return res.status(403).json({ success: false, msg: "Not authorized for this operation" });
     }
+
+    let applications = role === "HOD" 
+      ? await getApplications("FACULTY") 
+      : role === "DIRECTOR" 
+      ? await getApplications("HOD") 
+      : [];
+
+    res.status(200).json({ success: true, body: applications });
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    res.status(502).json({ success: false, error: error.message });
   }
-);
+});
 
-leaveRouter.get(
-  "/updateStatus",
-  authenticate,
-  getUserInfo,
-  async (req, res) => {
-    try {
-      const queryParam = req.query;
+leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => {
+  try {
+    const { status, name, reason } = req.query;
 
-      if (
-        !(queryParam.status === "accepted" || queryParam.status === "rejected")
-      ) {
-        res
-          .send(400)
-          .json({ error: "Wrong status given either give accept or reject" });
-      }
-      if (!queryParam.name) {
-        res.send(400).json({ error: "Id is not provided" });
-      }
-      if (req.userInfo.role === "FACULTY") {
-        res.status(400).json({
-          msg: "Not authorized for this req",
-        });
-      }
-      if (req.userInfo.role === "HOD") {
-        let updatedRecord = await updateStatus({
-          name: queryParam.name,
-          stage: "HOD",
-          status: queryParam.status,
-        });
-        res.status(200).send(updatedRecord);
-      }
-
-      if (req.userInfo.role === "DIRECTOR") {
-        let updatedRecord = await updateStatus({
-          name: queryParam.name,
-          stage: "DIRECTOR",
-          status: queryParam.status,
-        });
-        res.status(200).send(updatedRecord);
-      }
-    } catch (error) {
-      console.log(error);
-      res
-        .status(500)
-        .send("Internal server error while performing updateStatus");
+    if (!status || (status !== "accepted" && status !== "rejected")) {
+      return res.status(400).json({ error: "Invalid status. Use 'accepted' or 'rejected'." });
     }
+    if (!name) {
+      return res.status(400).json({ error: "Name is required." });
+    }
+    if (status === "rejected" && (!reason || reason.trim() === "")) {
+      return res.status(400).json({ error: "Rejection reason is required." });
+    }
+
+    let updatedRecord;
+    if (req.userInfo.role === "HOD") {
+      updatedRecord = await updateStatus({ name, stage: "HOD", status, reason });
+    } else if (req.userInfo.role === "DIRECTOR") {
+      updatedRecord = await updateStatus({ name, stage: "DIRECTOR", status, reason });
+    } else {
+      return res.status(403).json({ error: "Not authorized for this request." });
+    }
+
+    res.status(200).json({ success: true, updatedRecord });
+  } catch (error) {
+    console.error("Error updating leave status:", error);
+    res.status(500).json({ error: "Internal server error while updating status." });
   }
-);
+});
 
 leaveRouter.get('/leave-stats', authenticate, getUserInfo, async (req, res) => {
   try {
-     let username = req.userInfo.username;
+    let username = req.userInfo.username;
 
-      // Get total leaves
-      let totalLeaves = await prisma.record.count({
-          where: {
-              username: username
-          }
-      });
+    let totalLeaves = await prisma.record.count({ where: { username } });
+    let approvedLeaves = await prisma.record.count({ where: { username, status: 'accepted' } });
+    let pendingLeaves = await prisma.record.count({ where: { username, status: 'awaiting' } });
 
-      // Get approved leaves
-      let approvedLeaves = await prisma.record.count({
-          where: {
-              username: username,
-              status: 'accepted'
-          }
-      });
-
-      // Get pending leaves
-      let pendingLeaves = await prisma.record.count({
-          where: {
-              username: username,
-              status: 'awaiting'
-          }
-      });
-
-      res.status(200).json({
-          success: true,
-          data: {
-              totalLeaves,
-              approvedLeaves,
-              pendingLeaves
-            }
-        });
-
-    } catch (error) {
-        console.error('Error fetching leave statistics:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch leave statistics',
-            error: error.message
-        });
-    }
+    res.status(200).json({
+      success: true,
+      data: {
+        totalLeaves,
+        approvedLeaves,
+        pendingLeaves
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching leave statistics:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch leave statistics",
+      error: error.message
+    });
+  }
 });
-
-
-
-
 
 module.exports = leaveRouter;
