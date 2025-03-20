@@ -10,8 +10,8 @@ const COLORS = ["#1565C0", "#90CAF9"];
 
 const facultyImages = {
   mokshit: "/images/mokshit.jpg",  
-  harshil: "/images/harshil.jpg",  
-  parth: "/images/parth.jpg",     
+  harshill: "/images/harshil.jpg",  
+  parthh: "/images/parth.jpg",     
 };
 
 // Default profile image if username is not found
