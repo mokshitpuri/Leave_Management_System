@@ -8,6 +8,7 @@ import {
   Textarea,
   Button,
   useToast,
+  Text,
 } from "@chakra-ui/react";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ const ApplicationComponent = ({ data }) => {
   const navigate = useNavigate();
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [error, setError] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (payload) => {
@@ -53,16 +55,10 @@ const ApplicationComponent = ({ data }) => {
 
   const handleReject = () => {
     if (!rejectReason.trim()) {
-      toast({
-        title: "Rejection Reason Required",
-        description: "Please provide a reason before rejecting the leave request.",
-        status: "warning",
-        duration: 2000,
-        isClosable: true,
-        position: "top-right",
-      });
+      setError(true);
       return;
     }
+    setError(false);
     mutation.mutate({ status: "rejected", reason: rejectReason });
   };
 
@@ -114,10 +110,14 @@ const ApplicationComponent = ({ data }) => {
             <Textarea
               placeholder="Provide a reason for rejection..."
               value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              onChange={(e) => {
+                setRejectReason(e.target.value);
+                setError(false); // Remove error message on input change
+              }}
               className="mb-2"
             />
-            <Button colorScheme="red" onClick={handleReject}>
+            {error && <Text color="red.500" fontSize="sm">Rejection reason is required!</Text>}
+            <Button colorScheme="red" onClick={handleReject} className="mt-2">
               Confirm Rejection
             </Button>
           </div>
