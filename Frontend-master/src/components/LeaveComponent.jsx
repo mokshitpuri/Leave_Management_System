@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AccordionItem,
   AccordionButton,
@@ -15,89 +15,77 @@ import {
   Stepper,
   Box,
   Tag,
+  Flex,
+  Text,
 } from "@chakra-ui/react";
 
 const LeaveComponent = ({ data }) => {
   const colorMap = {
-    awaiting: "teal",
+    awaiting: "yellow",
     accepted: "green",
     rejected: "red",
   };
 
   const stepsFaculty = [
-    { title: "FACULTY", description: "" },
-    { title: "HOD", description: "" },
-    { title: "DIRECTOR", description: "" },
+    { title: "Faculty", description: "Leave submitted" },
+    { title: "HOD", description: "Pending approval" },
+    { title: "Director", description: "Final approval" },
   ];
 
   const stepsHod = [
     { title: "HOD", description: "Leave submitted" },
-    { title: "DIRECTOR", description: "Leave Accepted" },
+    { title: "Director", description: "Final approval" },
   ];
 
   const role = localStorage.getItem("role");
 
-  const findIndex = (data) => {
-    if (data === "FACULTY") return 1;
-    if (data === "HOD")
-      if (role === "HOD") return 1;
-      else return 2;
-    if (data === "DIRECTOR")
-      if (role === "HOD") return 2;
-      else return 3;
+  const findIndex = (stage) => {
+    if (stage === "FACULTY") return 0;
+    if (stage === "HOD") return role === "HOD" ? 0 : 1;
+    if (stage === "DIRECTOR") return role === "HOD" ? 1 : 2;
+    return 0;
   };
 
-  const findSteps = () => {
-    if (role === "FACULTY") return stepsFaculty;
-    if (role === "HOD") return stepsHod;
-  };
+  const findSteps = () => (role === "HOD" ? stepsHod : stepsFaculty);
+
+  const [steps, setSteps] = useState(findSteps());
 
   useEffect(() => {
     setSteps(findSteps());
-  }, []);
-
-  let [steps, setSteps] = React.useState(findSteps());
+  }, [role]);
 
   return (
-    <AccordionItem className="border rounded-md">
-      <AccordionButton className="flex flex-row justify-between px-2 py-1">
-        <p className="text-sm ">{data.name}</p>
-        <div className="flex flex-row ">
-          <div className="px-4">
-            <Tag colorScheme={colorMap[data.status]} className="text-sm px-7">
-              {data.status}
-            </Tag>
-          </div>
+    <AccordionItem className="border rounded-xl shadow-md bg-white">
+      <AccordionButton className="flex justify-between p-4 bg-gray-100 hover:bg-gray-200 transition-all duration-200 rounded-t-lg">
+        <Box className="flex flex-col">
+          <Text className="text-lg font-semibold text-gray-800">{data.name}</Text>
+          <Text className="text-sm text-gray-500">{data.type}</Text>
+        </Box>
+        <Flex align="center" gap={4}>
+          <Tag colorScheme={colorMap[data.status]} className="text-sm px-4 py-1 font-medium">
+            {data.status.toUpperCase()}
+          </Tag>
           <AccordionIcon />
-        </div>
+        </Flex>
       </AccordionButton>
-      <AccordionPanel pb={4}>
-        {steps && steps.length > 0 && (
-          <Stepper
-            size="sm"
-            orientation="vertical"
-            index={findIndex(data.stage)}
-          >
-            {steps.map((step, index) => (
-              <Step key={index}>
-                <StepIndicator>
-                  <StepStatus
-                    complete={<StepIcon />}
-                    incomplete={<StepNumber />}
-                    active={<StepNumber />}
-                  />
-                </StepIndicator>
 
-                <Box flexShrink="0">
-                  <StepTitle>{step.title}</StepTitle>
-                  <StepDescription>{step.description}</StepDescription>
-                </Box>
+      <AccordionPanel className="p-5 bg-white">
+        <Stepper size="sm" orientation="vertical" index={findIndex(data.stage)}>
+          {steps.map((step, index) => (
+            <Step key={index}>
+              <StepIndicator>
+                <StepStatus complete={<StepIcon />} incomplete={<StepNumber />} active={<StepNumber />} />
+              </StepIndicator>
 
-                <StepSeparator />
-              </Step>
-            ))}
-          </Stepper>
-        )}
+              <Box flexShrink="0" className="ml-3">
+                <StepTitle className="text-md font-semibold text-gray-800">{step.title}</StepTitle>
+                <StepDescription className="text-sm text-gray-600">{step.description}</StepDescription>
+              </Box>
+
+              <StepSeparator />
+            </Step>
+          ))}
+        </Stepper>
       </AccordionPanel>
     </AccordionItem>
   );

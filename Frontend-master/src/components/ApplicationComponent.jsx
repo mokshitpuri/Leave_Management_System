@@ -5,7 +5,6 @@ import {
   AccordionPanel,
   AccordionIcon,
   Box,
-  Tag,
   Textarea,
   Button,
   useToast,
@@ -96,20 +95,18 @@ const ApplicationComponent = ({ data }) => {
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
-          <Tag
+          <Button
             onClick={() => setShowRejectReason(!showRejectReason)}
             colorScheme="red"
-            className="py-2 px-6 text-sm cursor-pointer"
           >
             Reject
-          </Tag>
-          <Tag
+          </Button>
+          <Button
             onClick={() => mutation.mutate({ status: "accepted" })}
             colorScheme="green"
-            className="py-2 px-6 text-sm cursor-pointer"
           >
             Accept
-          </Tag>
+          </Button>
         </div>
 
         {showRejectReason && (

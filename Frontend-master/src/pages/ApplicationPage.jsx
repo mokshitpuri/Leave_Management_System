@@ -33,15 +33,13 @@ const ApplicationPage = () => {
   }
 
   return (
-<div className="w-full min-h-screen p-6 bg-gray-50">
-  <Accordion allowMultiple className="w-full space-y-4 p-4 bg-white shadow-lg rounded-lg">
-    {data.map((leave) => (
-      <ApplicationComponent key={leave.id} data={leave} />
-    ))}
-  </Accordion>
-</div>
-
-
+    <div className="w-full h-full ">
+      <Accordion allowMultiple className="p-2 flex flex-col space-y-2">
+        {data.map((leave) => {
+          return <ApplicationComponent data={leave} />;
+        })}
+      </Accordion>
+    </div>
   );
 };
 
