@@ -148,23 +148,23 @@ const CasualLeave = () => {
           </Box>
         </Flex>
 
+      
+
         <Box>
-          <FormLabel fontWeight="bold">Reason</FormLabel>
+          <FormLabel fontWeight="bold">Reason </FormLabel>
           <Textarea
-            id="message"
-            value={formik.values.message}
+            id="reqMessage"
+            name="reqMessage"
+            isRequired
+            value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
               if (words.length <= 100) {
-                formik.setFieldValue("message", e.target.value);
+                formik.setFieldValue("reqMessage", e.target.value);
               }
             }}
             placeholder="Enter the reason for leave (Max 100 words)"
-            isRequired
           />
-          {formik.touched.message && formik.errors.message && (
-            <p className="text-red-500 text-sm">{formik.errors.message}</p>
-          )}
         </Box>
 
         <Box>
