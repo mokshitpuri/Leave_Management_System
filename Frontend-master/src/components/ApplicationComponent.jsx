@@ -52,6 +52,21 @@ const ApplicationComponent = ({ data }) => {
     });
   }
 
+  const handleReject = () => {
+    if (!rejectReason.trim()) {
+      toast({
+        title: "Rejection Reason Required",
+        description: "Please provide a reason before rejecting the leave request.",
+        status: "warning",
+        duration: 2000,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
+    mutation.mutate({ status: "rejected", reason: rejectReason });
+  };
+
   return (
     <AccordionItem className="border rounded-xl shadow-md overflow-hidden">
       <AccordionButton className="flex justify-between p-4 bg-gray-100 hover:bg-gray-200 transition-all duration-200">
@@ -105,10 +120,7 @@ const ApplicationComponent = ({ data }) => {
               onChange={(e) => setRejectReason(e.target.value)}
               className="mb-2"
             />
-            <Button
-              colorScheme="red"
-              onClick={() => mutation.mutate({ status: "rejected", reason: rejectReason })}
-            >
+            <Button colorScheme="red" onClick={handleReject}>
               Confirm Rejection
             </Button>
           </div>
