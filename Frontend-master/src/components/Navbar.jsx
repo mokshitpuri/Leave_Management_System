@@ -14,6 +14,28 @@ function Navbar() {
 
   const getRole = () => localStorage.getItem("role");
 
+  const downloadReport = async () => {
+    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3001/api/report/download-report";
+
+    try {
+      const response = await fetch(reportUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch the report");
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Faculty_Leave_Report.pdf";
+      link.click();
+    } catch (error) {
+      console.error("Error downloading the report:", error);
+    }
+  };
+
   const menuItems = {
     FACULTY: [
       { title: "Home", path: "/dashboard/home" },
@@ -27,6 +49,12 @@ function Navbar() {
     DIRECTOR: [
       { title: "Home", path: "/dashboard/home" },
       { title: "Applications", path: "/dashboard/applications" },
+      {
+        title: "Download Report",
+        isExternal: true,
+        path: "#",
+        onClick: downloadReport,
+      },
     ],
   };
 
@@ -65,20 +93,31 @@ function Navbar() {
         ) : (
           // Show full menu on larger screens
           <div className="flex gap-6 items-center w-full justify-between">
-            <div className="flex gap-6">
-              {userMenu.map((item, index) => (
-                <button
-                  key={index}
-                  className={`relative font-medium transition-all duration-300 ${
-                    location.pathname === item.path
-                      ? "text-[#d1e0ff] after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-[#d1e0ff]"
-                      : "text-white hover:text-gray-300"
-                  }`}
-                  onClick={() => navigate(item.path)}
-                >
-                  {item.title}
-                </button>
-              ))}
+            <div className="flex gap-6 items-center">
+              {userMenu.map((item, index) =>
+                item.isExternal ? (
+                  <button
+                    key={index}
+                    className="bg-green-500 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition"
+                    onClick={item.onClick}
+                  >
+                    {item.title}
+                  </button>
+                ) : (
+                  <button
+                    key={index}
+                    className={`relative font-medium transition-all duration-300 ${
+                      location.pathname === item.path
+                        ? "text-[#d1e0ff] after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-[#d1e0ff]"
+                        : "text-white hover:text-gray-300"
+                    }`}
+                    onClick={() => navigate(item.path)}
+                  >
+                    {item.title}
+                  </button>
+                )
+              )}
+
               {/* Apply Leave Button - Always visible on larger screens */}
               <button
                 className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
@@ -88,6 +127,8 @@ function Navbar() {
                 Apply Leave
               </button>
             </div>
+
+            {/* Logout Button */}
             <button
               className="bg-red-500 font-semibold flex items-center gap-2 px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition"
               onClick={() => {
