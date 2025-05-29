@@ -1,34 +1,35 @@
 require("dotenv").config();
 const express = require("express");
 const PDFDocument = require("pdfkit");
-const prisma = require("../functions/prismaFunction"); // Adjust if necessary
+const { PassThrough } = require("stream");
+const prisma = require("../functions/prismaFunction");
 
 const router = express.Router();
 
 // Endpoint to download the full leave report for all faculties
 router.get("/download-report", async (req, res) => {
   try {
-    // Fetch all users with their leave records
     const users = await prisma.user.findMany({
       include: {
-        Record: true, // Include leave records associated with the user
+        Record: true,
       },
     });
 
     const doc = new PDFDocument();
+    const stream = new PassThrough();
 
-    // Set headers to force download with PDF file extension
+    // Set headers
     res.setHeader("Content-Disposition", "attachment; filename=Faculty_Leave_Report.pdf");
     res.setHeader("Content-Type", "application/pdf");
 
-    // Pipe the PDF output to the response
-    doc.pipe(res);
+    // Pipe PDF output correctly
+    doc.pipe(stream);
+    stream.pipe(res);
 
-    // Generate the PDF document
+    // Build PDF content
     doc.fontSize(18).text("Faculty Leave Report", { align: "center" });
     doc.moveDown();
 
-    // Loop through users and generate the PDF content
     for (const user of users) {
       if (user.role === "FACULTY") {
         doc.fontSize(14).text(`Faculty: ${user.firstName} ${user.lastName}`);
@@ -50,7 +51,7 @@ router.get("/download-report", async (req, res) => {
       }
     }
 
-    doc.end(); // Finish and send the PDF document
+    doc.end(); // Important: this finalizes the PDF stream
   } catch (err) {
     console.error("Error generating report:", err);
     res.status(500).send("Error generating PDF report");
