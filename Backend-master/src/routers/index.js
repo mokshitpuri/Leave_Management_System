@@ -3,6 +3,7 @@ const authRouter = require("./authRouter");
 const adminRouter = require("./adminRouter");
 const userRouter = require("./userRouter");
 const leaveRouter = require("./leaveRouter");
+const reportRouter = require("./reportRouter");
 
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router.use("/auth", authRouter);
 router.use("/admin", adminRouter);
 router.use("/user", userRouter);
 router.use("/leave", leaveRouter);
+router.use("/report", reportRouter);
 
 module.exports = router;

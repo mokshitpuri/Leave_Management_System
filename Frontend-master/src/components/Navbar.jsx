@@ -15,7 +15,7 @@ function Navbar() {
   const getRole = () => localStorage.getItem("role");
 
   const downloadReport = async () => {
-    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3001/api/report/download-report";
+    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3000/report/download-report";
 
     try {
       const response = await fetch(reportUrl, {
@@ -31,8 +31,10 @@ function Navbar() {
       link.href = URL.createObjectURL(blob);
       link.download = "Faculty_Leave_Report.pdf";
       link.click();
+      URL.revokeObjectURL(link.href); // Clean up blob URL
     } catch (error) {
       console.error("Error downloading the report:", error);
+      alert("Failed to download the report. Please try again later."); // User-friendly error message
     }
   };
 
