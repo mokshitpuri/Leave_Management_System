@@ -14,22 +14,22 @@ function Navbar() {
 
   const getRole = () => localStorage.getItem("role");
 
-  const downloadReport = async () => {
+  const downloadReport = async (leaveType) => {
     const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3000/report/download-report";
-
+  
     try {
-      const response = await fetch(reportUrl, {
+      const response = await fetch(`${reportUrl}?leaveType=${leaveType}`, {
         method: "GET",
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to fetch the report");
       }
-
+  
       const blob = await response.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "Faculty_Leave_Report.pdf";
+      link.download = `${leaveType}_Leave_Report.pdf`;
       link.click();
       URL.revokeObjectURL(link.href); // Clean up blob URL
     } catch (error) {
@@ -37,25 +37,35 @@ function Navbar() {
       alert("Failed to download the report. Please try again later."); // User-friendly error message
     }
   };
-
+  
+  // Example usage in menu items
   const menuItems = {
-    FACULTY: [
-      { title: "Home", path: "/dashboard/home" },
-      { title: "Leave Records", path: "/dashboard/records" },
-    ],
-    HOD: [
-      { title: "Home", path: "/dashboard/home" },
-      { title: "Leave Records", path: "/dashboard/records" },
-      { title: "Applications", path: "/dashboard/applications" },
-    ],
     DIRECTOR: [
       { title: "Home", path: "/dashboard/home" },
       { title: "Applications", path: "/dashboard/applications" },
       {
-        title: "Download Report",
+        title: "Download Casual Leave Report",
         isExternal: true,
         path: "#",
-        onClick: downloadReport,
+        onClick: () => downloadReport("casual"),
+      },
+      {
+        title: "Download Medical Leave Report",
+        isExternal: true,
+        path: "#",
+        onClick: () => downloadReport("medical"),
+      },
+      {
+        title: "Download Academic Leave Report",
+        isExternal: true,
+        path: "#",
+        onClick: () => downloadReport("academic"),
+      },
+      {
+        title: "Download Earned Leave Report",
+        isExternal: true,
+        path: "#",
+        onClick: () => downloadReport("earned"),
       },
     ],
   };

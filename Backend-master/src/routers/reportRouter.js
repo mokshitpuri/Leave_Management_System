@@ -9,19 +9,20 @@ const router = express.Router();
 
 router.get("/download-report", async (req, res) => {
   try {
+    const { leaveType } = req.query; // Get leave type from query parameter
     const users = await prisma.user.findMany();
 
     const doc = new PDFDocument({ margin: 50 });
     const stream = new PassThrough();
 
-    res.setHeader("Content-Disposition", "attachment; filename=Faculty_Attendance_Report.pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=${leaveType}_Leave_Report.pdf`);
     res.setHeader("Content-Type", "application/pdf");
 
     doc.pipe(stream);
     stream.pipe(res);
 
     // Title
-    doc.fontSize(22).fillColor("#1565C0").text("Faculty Attendance Report", { align: "center" });
+    doc.fontSize(22).fillColor("#1565C0").text(`${leaveType} Leave Report`, { align: "center" });
     doc.moveDown(1.5);
 
     for (const user of users) {
@@ -54,7 +55,12 @@ router.get("/download-report", async (req, res) => {
         { name: "Medical Leave", allotted: 10, remaining: user.medicalLeave || 0 },
       ];
 
-      leaveTypes.forEach((leave) => {
+      // Filter leave types based on the query parameter
+      const filteredLeaveTypes = leaveType
+        ? leaveTypes.filter((leave) => leave.name.toLowerCase().includes(leaveType.toLowerCase()))
+        : leaveTypes;
+
+      filteredLeaveTypes.forEach((leave) => {
         const consumed = leave.allotted - leave.remaining;
 
         doc.fontSize(11).fillColor("#333");
