@@ -11,7 +11,7 @@ router.get("/", (req, res) => {
   res.status(200).send("Health Check");
 });
 router.use("/auth", authRouter);
-router.use("/admin", adminRouter);
+router.use("/admin", adminRouter); // Ensure adminRouter is registered
 router.use("/user", userRouter);
 router.use("/leave", leaveRouter);
 router.use("/report", reportRouter);

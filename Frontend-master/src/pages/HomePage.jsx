@@ -189,7 +189,9 @@ const Home = () => {
         />
         <div>
           <p className="text-3xl font-bold text-gray-900">
-            {userData?.username || "User"}
+            {userData?.firstName && userData?.lastName
+              ? `${userData.firstName} ${userData.lastName}`
+              : "User"}
           </p>
           <p className="text-lg text-gray-600 bg-blue-100 px-3 py-1 rounded-full inline-block mt-2">
             {userData?.role || "N/A"}

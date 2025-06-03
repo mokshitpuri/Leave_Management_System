@@ -26,6 +26,28 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
     return res.status(400).json({ error: { msg: "All fields are required" } });
   }
 
+  // Check for duplicate leave name
+  const existingLeaveByName = await prisma.record.findFirst({
+    where: { username, name },
+  });
+  if (existingLeaveByName) {
+    return res.status(400).json({ error: { msg: "Leave with this name already exists" } });
+  }
+
+  // Check for overlapping leave dates
+  const overlappingLeave = await prisma.record.findFirst({
+    where: {
+      username,
+      OR: [
+        { from: { lte: new Date(to) }, to: { gte: new Date(from) } },
+        { from: { gte: new Date(from) }, to: { lte: new Date(to) } },
+      ],
+    },
+  });
+  if (overlappingLeave) {
+    return res.status(400).json({ error: { msg: "Leave dates overlap with an existing leave" } });
+  }
+
   switch (type) {
     case "casual":
       if (req.userInfo.casualLeave < days) {

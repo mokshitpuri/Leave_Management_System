@@ -1,25 +1,17 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-
-const reportRouter = require("./routers/reportRouter"); // Report router
+const router = require("./routers/index"); // Main router
 
 const app = express();
 
+// Middleware setup
 app.use(express.json());
+app.use(cors());
 
-app.use(
-  cors({
-    origin: "http://localhost:3001", // React frontend URL
-  })
-);
+// Register the main router
+app.use("/", router);
 
-app.options("*", cors());
-
-// Mount report router at /api/report
-app.use("/api/report", reportRouter);
-
-// Basic error handler middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke in the server");
@@ -27,5 +19,5 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });

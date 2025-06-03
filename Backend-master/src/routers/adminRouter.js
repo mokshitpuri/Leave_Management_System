@@ -23,8 +23,9 @@ adminRouter.post("/addUser", async (req, res) => {
       body: newUser,
     });
   } catch (error) {
+    console.error("Error creating user:", error.message);
     res.status(500).json({
-      error: `failed to addUser :- ${error}`,
+      error: `Failed to create user: ${error.message}`,
     });
   }
 });

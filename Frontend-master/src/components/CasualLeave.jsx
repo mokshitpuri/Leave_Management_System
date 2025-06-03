@@ -34,6 +34,28 @@ const CasualLeave = () => {
 
   const mutation = useMutation({
     mutationFn: (payload) => api.post("/leave/apply", payload),
+    onError: (error) => {
+      const errorMessage = error.response?.data?.error?.msg || "Something went wrong";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Leave created successfully",
+        status: "success",
+        duration: 1000,
+        isClosable: true,
+        position: "top-right",
+      });
+      navigate("/dashboard/home");
+    },
   });
 
   const handleSubmit = async (values, actions) => {
@@ -44,30 +66,6 @@ const CasualLeave = () => {
     };
 
     await mutation.mutate(payload);
-
-    if (mutation.isSuccess) {
-      toast({
-        title: "Success",
-        description: "Leave created successfully",
-        status: "success",
-        duration: 1000,
-        isClosable: true,
-        position: "top-right",
-      });
-      navigate("/dashboard/home");
-    }
-
-    if (mutation.isError) {
-      console.error(mutation.error);
-      toast({
-        title: "Failed",
-        description: "Something went wrong",
-        status: "error",
-        duration: 1000,
-        isClosable: true,
-        position: "top-right",
-      });
-    }
   };
 
   const formik = useFormik({
