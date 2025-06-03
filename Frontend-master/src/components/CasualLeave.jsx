@@ -17,8 +17,10 @@ import moment from "moment";
 import { useFormik } from "formik";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const CasualLeave = () => {
+  const navigate = useNavigate(); // Add useNavigate hook
   const [startDate, setStartDate] = useState(moment());
   const [endDate, setEndDate] = useState(moment());
   const [maxLeaveDays, setMaxLeaveDays] = useState(12);
@@ -52,8 +54,7 @@ const CasualLeave = () => {
         isClosable: true,
         position: "top-right",
       });
-
-      setTimeout(() => actions.resetForm(), 1000);
+      navigate("/dashboard/home");
     }
 
     if (mutation.isError) {

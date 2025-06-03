@@ -81,13 +81,24 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
 
 leaveRouter.get("/getLeaves", authenticate, getUserInfo, async (req, res) => {
   try {
-    let leaves = await userLeaves(req.userInfo.username);
+    const { status } = req.query; // Accept status as a query parameter
+    let leaves = await prisma.record.findMany({
+      where: {
+        username: req.userInfo.username,
+        ...(status && { status }), // Filter by status if provided
+      },
+    });
+
+    if (!leaves) {
+      throw new Error("No leave records found");
+    }
+
     res.status(200).json({
       success: true,
       body: leaves,
     });
   } catch (error) {
-    console.error("Error fetching leaves:", error);
+    console.error("Error fetching leaves:", error.message);
     res.status(500).json({
       msg: "Internal server error",
       error: error.message,

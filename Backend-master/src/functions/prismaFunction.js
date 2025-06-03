@@ -3,14 +3,19 @@ const { func } = require("joi");
 const prisma = new PrismaClient();
 
 async function findUser({ username, password }) {
-  let user = await prisma.user.findFirst({
-    where: {
-      username: username,
-      password: password,
-    },
-  });
-  if (user === null) return null;
-  else return user;
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        username: username,
+        password: password,
+      },
+    });
+
+    return user || null;
+  } catch (error) {
+    console.error("Error finding user:", error);
+    throw new Error("Database query failed");
+  }
 }
 
 async function createUser({ username, password, firstName, lastName, role }) {
@@ -84,40 +89,47 @@ async function getApplications(data) {
 
 async function updateStatus(data) {
   try {
-    if (data.stage === "DIRECTOR") {
-      let updatedRecord = await prisma.record.update({
-        where: {
-          name: data.name,
-        },
-        data: {
-          stage: data.stage,
-          status: data.status,
-        },
-      });
-      return updatedRecord;
-    } else {
-      let dataObject = null;
-      if (data.status === "rejected") {
-        dataObject = {
-          stage: data.stage,
-          status: "rejected",
-        };
-      }
-      if (data.status === "accepted") {
-        dataObject = {
-          stage: data.stage,
-        };
-      }
-      let updatedRecord = await prisma.record.update({
-        where: {
-          name: data.name,
-        },
-        data: dataObject,
-      });
-      return updatedRecord;
+    const record = await prisma.record.findFirst({
+      where: { name: data.name },
+    });
+
+    if (!record) {
+      throw new Error("Record not found");
     }
+
+    if (data.stage === "DIRECTOR" && data.status === "accepted") {
+      // Deduct leave days from user's balance
+      const user = await prisma.user.findFirst({
+        where: { username: record.username },
+      });
+
+      const days = Math.ceil((new Date(record.to) - new Date(record.from)) / (1000 * 60 * 60 * 24)) + 1;
+
+      if (user[`${record.type}Leave`] < days) {
+        throw new Error("Insufficient leave balance");
+      }
+
+      const updatedLeaveBalance = user[`${record.type}Leave`] - days;
+
+      await prisma.user.update({
+        where: { username: record.username },
+        data: { [`${record.type}Leave`]: updatedLeaveBalance },
+      });
+    }
+
+    const updatedRecord = await prisma.record.update({
+      where: { name: data.name },
+      data: {
+        stage: data.stage,
+        status: data.status,
+        ...(data.status === "rejected" && { rejMessage: data.reason }),
+      },
+    });
+
+    return updatedRecord;
   } catch (error) {
-    return new Error(error);
+    console.error("Error in updateStatus:", error.message);
+    throw new Error(error);
   }
 }
 

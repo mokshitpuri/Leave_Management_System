@@ -1,74 +1,87 @@
+require("dotenv").config();
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const PDFDocument = require("pdfkit");
 const { PassThrough } = require("stream");
+const { PrismaClient } = require("@prisma/client");
 
-const router = express.Router();
 const prisma = new PrismaClient();
+const router = express.Router();
 
-router.get("/faculty-report", async (req, res) => {
+router.get("/download-report", async (req, res) => {
   try {
-    // Fetch all users with role "FACULTY" and include their leave records
-    const facultyUsers = await prisma.user.findMany({
-      where: {
-        role: "FACULTY"
-      },
-      include: {
-        Record: true
-      }
-    });
+    const { leaveType } = req.query; // Get leave type from query parameter
+    const users = await prisma.user.findMany();
 
-    // Initialize a PDF document
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 50 });
     const stream = new PassThrough();
 
-    // Set headers for PDF file download
-    res.setHeader("Content-Disposition", "attachment; filename=Faculty_Report.pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=${leaveType}_Leave_Report.pdf`);
     res.setHeader("Content-Type", "application/pdf");
 
-    // Pipe PDF to response stream
     doc.pipe(stream);
     stream.pipe(res);
 
     // Title
-    doc.fontSize(18).text("Faculty Leave Report", { align: "center" });
+    doc.fontSize(22).fillColor("#1565C0").text(`${leaveType} Leave Report`, { align: "center" });
     doc.moveDown(1.5);
 
-    // Loop through each faculty user
-    facultyUsers.forEach((user, index) => {
-      doc
-        .fontSize(14)
-        .fillColor("#000")
-        .text(`${index + 1}. ${user.firstName} ${user.lastName} (${user.username})`, { underline: true });
+    for (const user of users) {
+      const startX = doc.page.margins.left;
+      let y = doc.y;
 
-      doc
-        .fontSize(12)
-        .text(
-          `Leave Balance → Casual: ${user.casualLeave}, Medical: ${user.medicalLeave}, Earned: ${user.earnedLeave}, Academic: ${user.academicLeave}`
-        );
+      // User name and role
+      doc.fontSize(16).fillColor("#000").text(`${user.firstName} ${user.lastName}`, startX, y);
+      y = doc.y + 2;
+      doc.fontSize(12).fillColor("#666").text(`${user.role}`, startX, y);
+      y = doc.y + 10;
 
-      if (user.Record.length === 0) {
-        doc.fontSize(10).text("  No leave applications submitted.\n");
-      } else {
-        doc.fontSize(11).text("  Leave Applications:");
-        user.Record.forEach((r, i) => {
-          doc
-            .fontSize(10)
-            .text(
-              `    ${i + 1}. ${r.type} | ${r.status} | From: ${r.from.toISOString().split("T")[0]} To: ${
-                r.to.toISOString().split("T")[0]
-              } | Reason: ${r.reqMessage} | Rejection Comment: ${r.rejMessage || "N/A"}`
-            );
-        });
-      }
+      // Table headers
+      doc.fontSize(12).fillColor("#000");
+      doc.text("Leave Type", startX, y);
+      doc.text("Allotted", startX + 200, y);
+      doc.text("Consumed", startX + 300, y);
+      doc.text("Remaining", startX + 400, y);
 
-      doc.moveDown(1.2);
-    });
+      y += 20;
+
+      // Draw line under headers (after spacing)
+      doc.moveTo(startX, y).lineTo(550, y).strokeColor("#1565C0").stroke();
+      y += 10;
+
+      const leaveTypes = [
+        { name: "Casual Leave", allotted: 12, remaining: user.casualLeave || 0 },
+        { name: "Academic Leave", allotted: 15, remaining: user.academicLeave || 0 },
+        { name: "Earned Leave", allotted: 15, remaining: user.earnedLeave || 0 },
+        { name: "Medical Leave", allotted: 10, remaining: user.medicalLeave || 0 },
+      ];
+
+      // Filter leave types based on the query parameter
+      const filteredLeaveTypes = leaveType
+        ? leaveTypes.filter((leave) => leave.name.toLowerCase().includes(leaveType.toLowerCase()))
+        : leaveTypes;
+
+      filteredLeaveTypes.forEach((leave) => {
+        const consumed = leave.allotted - leave.remaining;
+
+        doc.fontSize(11).fillColor("#333");
+        doc.text(leave.name, startX, y);
+        doc.text(leave.allotted.toString(), startX + 200, y);
+        doc.text(consumed.toString(), startX + 300, y);
+        doc.text(leave.remaining.toString(), startX + 400, y);
+
+        y += 18;
+      });
+
+      // Bottom separator line
+      y += 6;
+      doc.moveTo(startX, y).lineTo(550, y).strokeColor("#ccc").stroke();
+      doc.moveDown(2);
+    }
 
     doc.end();
-  } catch (error) {
-    console.error("PDF Generation Error:", error);
-    res.status(500).json({ error: "Failed to generate PDF report." });
+  } catch (err) {
+    console.error("Error generating report:", err);
+    res.status(500).send("Error generating PDF report");
   }
 });
 

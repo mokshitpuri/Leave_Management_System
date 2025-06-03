@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import DrawerContext from "../context/DrawerContext";
 import { useMediaQuery } from "react-responsive";
 import Drawer from "./Drawer";
+import { Menu, MenuButton, MenuList, MenuItem, Button } from "@chakra-ui/react";
 
 function Navbar() {
   const { setOpen } = React.useContext(DrawerContext);
@@ -14,47 +15,44 @@ function Navbar() {
 
   const getRole = () => localStorage.getItem("role");
 
-  const downloadReport = async () => {
-    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3001/api/report/download-report";
-
+  const downloadReport = async (leaveType) => {
+    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3000/report/download-report";
+  
     try {
-      const response = await fetch(reportUrl, {
+      const response = await fetch(`${reportUrl}?leaveType=${leaveType}`, {
         method: "GET",
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to fetch the report");
       }
-
+  
       const blob = await response.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "Faculty_Leave_Report.pdf";
+      link.download = `${leaveType}_Leave_Report.pdf`;
       link.click();
+      URL.revokeObjectURL(link.href); // Clean up blob URL
     } catch (error) {
       console.error("Error downloading the report:", error);
+      alert("Failed to download the report. Please try again later."); // User-friendly error message
     }
   };
-
+  
+  // Example usage in menu items
   const menuItems = {
-    FACULTY: [
+    DIRECTOR: [
       { title: "Home", path: "/dashboard/home" },
-      { title: "Leave Records", path: "/dashboard/records" },
+      { title: "Applications", path: "/dashboard/applications" },
     ],
     HOD: [
       { title: "Home", path: "/dashboard/home" },
       { title: "Leave Records", path: "/dashboard/records" },
       { title: "Applications", path: "/dashboard/applications" },
     ],
-    DIRECTOR: [
+    FACULTY: [
       { title: "Home", path: "/dashboard/home" },
-      { title: "Applications", path: "/dashboard/applications" },
-      {
-        title: "Download Report",
-        isExternal: true,
-        path: "#",
-        onClick: downloadReport,
-      },
+      { title: "Leave Records", path: "/dashboard/records" },
     ],
   };
 
@@ -118,14 +116,42 @@ function Navbar() {
                 )
               )}
 
-              {/* Apply Leave Button - Always visible on larger screens */}
-              <button
-                className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
-                style={{ color: "rgb(43, 66, 100)" }}
-                onClick={() => navigate("/dashboard/apply")}
-              >
-                Apply Leave
-              </button>
+              <div className="flex items-center gap-6">
+                {/* Apply Leave Button */}
+                <button
+                  className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
+                  style={{ color: "rgb(43, 66, 100)" }}
+                  onClick={() => navigate("/dashboard/apply")}
+                >
+                  Apply Leave
+                </button>
+
+                {/* Dropdown for downloading reports - Visible only to DIRECTOR */}
+                {role === "DIRECTOR" && (
+                  <Menu>
+                    <MenuButton as={Button} colorScheme="blue">
+                      Download Report
+                    </MenuButton>
+                    <MenuList>
+                      <MenuItem style={{ color: "black" }} onClick={() => downloadReport("casual")}>
+                        Casual Leave
+                      </MenuItem>
+                      <MenuItem style={{ color: "black" }} onClick={() => downloadReport("medical")}>
+                        Medical Leave
+                      </MenuItem>
+                      <MenuItem style={{ color: "black" }} onClick={() => downloadReport("academic")}>
+                        Academic Leave
+                      </MenuItem>
+                      <MenuItem style={{ color: "black" }} onClick={() => downloadReport("earned")}>
+                        Earned Leave
+                      </MenuItem>
+                      <MenuItem style={{ color: "black" }} onClick={() => downloadReport("")}>
+                        Full Report
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+                )}
+              </div>
             </div>
 
             {/* Logout Button */}
