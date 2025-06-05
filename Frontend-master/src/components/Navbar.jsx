@@ -1,7 +1,7 @@
 import React from "react";
 import { CiMenuBurger } from "react-icons/ci";
 import { BiLogOut } from "react-icons/bi";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DrawerContext from "../context/DrawerContext";
 import { useMediaQuery } from "react-responsive";
 import Drawer from "./Drawer";
@@ -86,13 +86,15 @@ function Navbar() {
               </button>
             </div>
             <div>
-              <button
-                className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
-                style={{ color: "rgb(43, 66, 100)" }}
-                onClick={() => navigate("/dashboard/apply")}
-              >
-                Apply Leave
-              </button>
+              {role !== "DIRECTOR" && (
+                <button
+                  className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
+                  style={{ color: "rgb(43, 66, 100)" }}
+                  onClick={() => navigate("/dashboard/apply")}
+                >
+                  Apply Leave
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -113,17 +115,6 @@ function Navbar() {
                   {item.title}
                 </button>
               ))}
-
-              {/* Apply Leave Button (Hidden for Director) */}
-              {role !== "DIRECTOR" && (
-                <button
-                  className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
-                  style={{ color: "rgb(43, 66, 100)" }}
-                  onClick={() => navigate("/dashboard/apply")}
-                >
-                  Apply Leave
-                </button>
-              )}
             </div>
 
             {/* Right Side: Report & Logout */}
@@ -142,6 +133,17 @@ function Navbar() {
                     <MenuItem onClick={() => downloadReport("")}>Full Report</MenuItem>
                   </MenuList>
                 </Menu>
+              )}
+
+              {/* Apply Leave Button (Visible for HOD and Faculty) */}
+              {role !== "DIRECTOR" && (
+                <button
+                  className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
+                  style={{ color: "rgb(43, 66, 100)" }}
+                  onClick={() => navigate("/dashboard/apply")}
+                >
+                  Apply Leave
+                </button>
               )}
 
               {/* Logout */}

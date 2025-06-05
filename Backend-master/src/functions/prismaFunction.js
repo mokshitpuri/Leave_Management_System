@@ -222,6 +222,19 @@ async function updateleaves(userInfo, days, type) {
   }
 }
 
+// Delete a user by username
+async function deleteUserByUsername(username) {
+  try {
+    const deletedUser = await prisma.user.delete({
+      where: { username },
+    });
+    return deletedUser;
+  } catch (error) {
+    console.error("Error deleting user:", error.message);
+    throw error;
+  }
+}
+
 // Export all functions
 module.exports = {
   findUser,
@@ -231,4 +244,5 @@ module.exports = {
   getApplications,
   updateStatus,
   updateleaves,
+  deleteUserByUsername,
 };

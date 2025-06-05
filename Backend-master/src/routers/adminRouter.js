@@ -52,59 +52,43 @@ adminRouter.post("/addUser", async (req, res) => {
   }
 });
 
-// ❌ Delete user by username (case-insensitive)
+// Delete user by username
 adminRouter.delete("/deleteUser", async (req, res) => {
-  const { username } = req.body;
+  const { username } = req.query;
 
   if (!username) {
-    return res.status(400).json({ error: "Username is missing." });
+    return res.status(400).json({ error: "Username is required." });
   }
 
   try {
-    // Find user first with case-insensitive match
-    const userToDelete = await prisma.user.findFirst({
-      where: {
-        username: {
-          equals: username,
-          mode: "insensitive",
-        },
-      },
-    });
-
-    if (!userToDelete) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Delete records related to this username (case-sensitive to stored username)
+    // Delete related records in the Record table
     await prisma.record.deleteMany({
-      where: { username: userToDelete.username },
+      where: { username },
     });
 
     // Delete the user
     const deletedUser = await prisma.user.delete({
-      where: { username: userToDelete.username },
+      where: { username },
     });
 
     res.status(200).json({
       success: true,
-      message: `User '${userToDelete.username}' and related records have been deleted.`,
+      message: `User '${username}' has been deleted successfully.`,
       body: deletedUser,
     });
   } catch (error) {
-    console.error("❌ Error deleting user:", error.message);
-    res.status(500).json({
-      error: `Failed to delete user: ${error.message}`,
-    });
+    console.error("Error deleting user:", error.message);
+    res.status(500).json({ error: `Failed to delete user: ${error.message}` });
   }
 });
 
 // 📦 Get all user data
 adminRouter.get("/userData", async (req, res) => {
   try {
-    const userData = await prisma.user.findMany();
-    res.status(200).json(userData);
+    const users = await prisma.user.findMany(); // Fetch all fields for each user
+    res.status(200).json(users); // Return the full user data
   } catch (error) {
-    console.error("❌ Error fetching users:", error.message);
+    console.error("Error fetching users:", error.message);
     res.status(500).json({ error: "Failed to retrieve user data." });
   }
 });

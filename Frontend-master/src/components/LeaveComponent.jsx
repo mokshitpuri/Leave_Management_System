@@ -21,7 +21,7 @@ import {
   StepNumber,
 } from "@chakra-ui/react";
 
-const LeaveComponent = ({ data, onDelete, onCancel, onClear }) => {
+const LeaveComponent = ({ data, onCancel, onClear }) => {
   const toast = useToast();
   const colorMap = {
     awaiting: "yellow",
@@ -56,8 +56,6 @@ const LeaveComponent = ({ data, onDelete, onCancel, onClear }) => {
   useEffect(() => {
     setSteps(findSteps());
   }, [role]);
-
-  const isDeletable = data.status === "accepted" && new Date(data.from) > new Date();
 
   const handleCancel = () => {
     const threeDaysBeforeStartDate = new Date(data.from);
@@ -150,11 +148,25 @@ const LeaveComponent = ({ data, onDelete, onCancel, onClear }) => {
         )}
 
         {data.status === "rejected" && (
-          <Flex justify="flex-end" mt={4}>
-            <Button colorScheme="red" size="sm" onClick={handleClear}>
-              Clear Request
-            </Button>
-          </Flex>
+          <>
+            {/* Show rejection reason above the Clear Request button */}
+            {data.rejMessage && (
+              <Box mt={4} p={3} borderWidth="1px" borderRadius="md" bg="red.50" borderColor="red.300">
+                <Text fontWeight="bold" color="red.600" mb={1}>
+                  Rejection Reason:
+                </Text>
+                <Text color="red.700" whiteSpace="pre-wrap">
+                  {data.rejMessage}
+                </Text>
+              </Box>
+            )}
+
+            <Flex justify="flex-end" mt={4}>
+              <Button colorScheme="red" size="sm" onClick={handleClear}>
+                Clear Request
+              </Button>
+            </Flex>
+          </>
         )}
       </AccordionPanel>
     </AccordionItem>

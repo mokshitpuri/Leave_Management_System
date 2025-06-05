@@ -15,6 +15,7 @@ import {
 import RecordsPage from "./pages/RecordsPage";
 import ApplicationPage from "./pages/ApplicationPage";
 import AddUserPage from "./pages/AddUserPage";
+import ManageUsersPage from "./pages/ManageUsersPage";
 
 const router = createBrowserRouter([
   {
@@ -42,9 +43,12 @@ const router = createBrowserRouter([
         path: "/dashboard/add-user",
         element: <AddUserPage />,
       },
+      {
+        path: "/dashboard/manage-users",
+        element: <ManageUsersPage />,
+      },
     ],
   },
-
   {
     path: "/login",
     element: <Login />,
@@ -62,7 +66,7 @@ function App() {
     <>
       <DrawerContextProvider>
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />;
+          <RouterProvider router={router} />
         </QueryClientProvider>
       </DrawerContextProvider>
     </>

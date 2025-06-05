@@ -17,7 +17,7 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something broke in the server");
 });
 
-const port = process.env.PORT || 3000;
+const port = 3000; // Ensure the backend runs on port 3000
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
