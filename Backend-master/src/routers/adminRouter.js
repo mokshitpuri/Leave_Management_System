@@ -93,4 +93,40 @@ adminRouter.get("/userData", async (req, res) => {
   }
 });
 
+// Reset leaves for all users
+adminRouter.post("/reset-leaves", async (req, res) => {
+  const { username, casualLeave, earnedLeave, medicalLeave, academicLeave } = req.body;
+
+  try {
+    const updateData = {
+      casualLeave,
+      earnedLeave,
+      medicalLeave,
+      academicLeave,
+    };
+
+    if (username) {
+      // Reset leaves for a specific user
+      await prisma.record.deleteMany({
+        where: { username },
+      });
+      await prisma.user.update({
+        where: { username },
+        data: updateData,
+      });
+    } else {
+      // Reset leaves for all users
+      await prisma.record.deleteMany({}); // Delete all leave records
+      await prisma.user.updateMany({
+        data: updateData,
+      });
+    }
+
+    res.status(200).json({ message: "Leaves reset successfully and all records deleted." });
+  } catch (error) {
+    console.error("Error resetting leaves:", error);
+    res.status(500).json({ error: "Failed to reset leaves." });
+  }
+});
+
 module.exports = adminRouter;

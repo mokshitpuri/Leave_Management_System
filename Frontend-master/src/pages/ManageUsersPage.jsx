@@ -72,6 +72,34 @@ const ManageUsersPage = () => {
     }
   };
 
+  const handleResetLeaves = async (username) => {
+    try {
+      await api.post("/admin/reset-leaves", {
+        username, // Pass the username to reset leaves for the specific user
+        casualLeave: 12,
+        earnedLeave: 15,
+        medicalLeave: 10,
+        academicLeave: 15,
+      });
+      toast({
+        title: "Success",
+        description: `Leaves have been reset to default for user '${username}'.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      window.location.reload(); // Reload the page after resetting leaves
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.response?.data?.error || "Failed to reset leaves.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minH="100vh">
@@ -144,6 +172,32 @@ const ManageUsersPage = () => {
                   <Stack direction="row" justifyContent="flex-end" mt="4">
                     <Button size="sm" onClick={() => handleDelete(user.username)} colorScheme="red">
                       Yes, Delete
+                    </Button>
+                  </Stack>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger>
+                <Button
+                  colorScheme="red"
+                  size="sm"
+                  position="absolute"
+                  bottom="6"
+                  right="6"
+                >
+                  Reset Leaves
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverHeader>Confirm Reset</PopoverHeader>
+                <PopoverBody>
+                  Are you sure you want to reset leaves for <strong>{user.username}</strong>?
+                  <Stack direction="row" justifyContent="flex-end" mt="4">
+                    <Button size="sm" onClick={() => handleResetLeaves(user.username)} colorScheme="red">
+                      Yes, Reset
                     </Button>
                   </Stack>
                 </PopoverBody>

@@ -152,13 +152,11 @@ const CasualLeave = () => {
             name="name"
             value={formik.values.name}
             onChange={formik.handleChange}
-            isRequired
             placeholder="Enter unique name"
-            isInvalid={formik.errors.name}
           />
-          {formik.errors.name && (
+          {formik.errors.name && formik.touched.name && (
             <Text color="red.500" fontSize="sm">
-              {formik.errors.name}
+              Leave name is mandatory.
             </Text>
           )}
         </Box>
@@ -206,16 +204,29 @@ const CasualLeave = () => {
           <Textarea
             id="reqMessage"
             name="reqMessage"
-            isRequired
             value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
               if (words.length <= 50) {
                 formik.setFieldValue("reqMessage", e.target.value);
+              } else {
+                toast({
+                  title: "Warning",
+                  description: "Reason cannot exceed 50 words.",
+                  status: "warning",
+                  duration: 3000,
+                  isClosable: true,
+                  position: "top-right",
+                });
               }
             }}
             placeholder="Enter the reason for leave (Max 50 words)"
           />
+          {formik.errors.reqMessage && formik.touched.reqMessage && (
+            <Text color="red.500" fontSize="sm">
+              Reason is mandatory.
+            </Text>
+          )}
         </Box>
 
         <Box>
@@ -225,10 +236,19 @@ const CasualLeave = () => {
             name="emergencyContact"
             type="tel"
             value={formik.values.emergencyContact || ""}
-            onChange={formik.handleChange}
-            placeholder="Enter emergency contact number"
-            isRequired
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d{0,10}$/.test(value)) {
+                formik.setFieldValue("emergencyContact", value);
+              }
+            }}
+            placeholder="Enter emergency contact number (Max 10 digits)"
           />
+          {formik.values.emergencyContact.length > 10 && (
+            <Text color="red.500" fontSize="sm">
+              Phone number cannot exceed 10 digits.
+            </Text>
+          )}
         </Box>
 
         <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>

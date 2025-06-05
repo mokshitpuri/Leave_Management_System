@@ -11,13 +11,25 @@ import {
   MenuList,
   MenuItem,
   Button,
+  useToast,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverHeader,
+  PopoverBody,
+  Stack,
+  Text,
 } from "@chakra-ui/react";
+import { api } from "../utils/axios/instance"; // Ensure API instance is imported
 
 function Navbar() {
   const { setOpen } = React.useContext(DrawerContext);
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useMediaQuery({ maxWidth: 768 });
+  const toast = useToast();
 
   const getRole = () => localStorage.getItem("role");
 
@@ -42,6 +54,35 @@ function Navbar() {
     } catch (error) {
       console.error("Error downloading the report:", error);
       alert("Failed to download the report. Please try again later.");
+    }
+  };
+
+  const handleResetAllLeaves = async () => {
+    try {
+      await api.post("/admin/reset-leaves", {
+        casualLeave: 12,
+        earnedLeave: 15,
+        medicalLeave: 10,
+        academicLeave: 15,
+      });
+      toast({
+        title: "Success",
+        description: "Leaves have been reset to default for all users.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      window.location.reload(); // Reload the page after resetting leaves
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset leaves. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
     }
   };
 
@@ -133,6 +174,34 @@ function Navbar() {
                     <MenuItem onClick={() => downloadReport("")}>Full Report</MenuItem>
                   </MenuList>
                 </Menu>
+              )}
+
+              {/* Reset Leaves Button (Visible for Director only) */}
+              {role === "DIRECTOR" && (
+                <Popover>
+                  <PopoverTrigger>
+                    <Button colorScheme="red" ml={4}>
+                      Reset All Leaves
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverHeader fontWeight="bold" fontSize="lg">
+                      Confirm Reset
+                    </PopoverHeader>
+                    <PopoverBody>
+                      <Text fontSize="md" color="black">
+                        Are you sure you want to reset leaves for all users?
+                      </Text>
+                      <Stack direction="row" justifyContent="flex-end" mt="4">
+                        <Button size="sm" onClick={handleResetAllLeaves} colorScheme="red">
+                          Yes, Reset
+                        </Button>
+                      </Stack>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
               )}
 
               {/* Apply Leave Button (Visible for HOD and Faculty) */}

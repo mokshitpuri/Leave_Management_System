@@ -152,9 +152,13 @@ const MedicalLeave = () => {
             name="name"
             value={formik.values.name}
             onChange={formik.handleChange}
-            isRequired
             placeholder="Enter unique name"
           />
+          {formik.errors.name && formik.touched.name && (
+            <Text color="red.500" fontSize="sm">
+              Leave name is mandatory.
+            </Text>
+          )}
         </Box>
 
         <Box>
@@ -199,16 +203,29 @@ const MedicalLeave = () => {
           <Textarea
             id="reqMessage"
             name="reqMessage"
-            isRequired
             value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
-              if (words.length <= 50) {
+              if (words.length <= 100) {
                 formik.setFieldValue("reqMessage", e.target.value);
+              } else {
+                toast({
+                  title: "Warning",
+                  description: "Reason cannot exceed 100 words.",
+                  status: "warning",
+                  duration: 3000,
+                  isClosable: true,
+                  position: "top-right",
+                });
               }
             }}
-            placeholder="Enter the reason for leave (Max 50 words)"
+            placeholder="Enter the reason for leave (Max 100 words)"
           />
+          {formik.errors.reqMessage && formik.touched.reqMessage && (
+            <Text color="red.500" fontSize="sm">
+              Reason is mandatory.
+            </Text>
+          )}
         </Box>
 
         <Box>
