@@ -100,6 +100,25 @@ async function createRecord(data) {
       rejMessage,
     } = data;
 
+    // Calculate the number of days for the leave
+    const days =
+      Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Check if the user has sufficient leave balance
+    const user = await prisma.user.findFirst({
+      where: { username },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const availableBalance = user[`${type}Leave`] || 0;
+    if (availableBalance < days) {
+      throw new Error(
+        `Insufficient leave balance. Available: ${availableBalance}, Requested: ${days}`
+      );
+    }
+
+    // Create the leave record without deducting leave balance
     const record = await prisma.record.create({
       data: {
         username,
@@ -162,7 +181,7 @@ async function updateStatus(data) {
 
     if (!record) throw new Error("Record not found");
 
-    // Final approval stage, update leave balance
+    // Final approval stage, update leave balance only if accepted
     if (data.stage === "DIRECTOR" && data.status === "accepted") {
       const user = await prisma.user.findFirst({
         where: { username: record.username },
@@ -176,6 +195,7 @@ async function updateStatus(data) {
       const balance = user[`${record.type}Leave`] || 0;
       if (balance < days) throw new Error("Insufficient leave balance");
 
+      // Deduct leave days from the user's balance
       await prisma.user.update({
         where: { username: record.username },
         data: {
@@ -184,6 +204,7 @@ async function updateStatus(data) {
       });
     }
 
+    // Update the record status and rejection reason if applicable
     const updatedRecord = await prisma.record.update({
       where: { name: data.name },
       data: {
@@ -204,12 +225,62 @@ async function updateStatus(data) {
 async function updateleaves(userInfo, days, type) {
   try {
     const field = `${type}Leave`;
-    const newBalance = userInfo[field] - days;
 
-    if (newBalance < 0) throw new Error("Leave balance cannot be negative");
+    // Ensure the user has the leave type field
+    if (!userInfo.hasOwnProperty(field)) {
+      throw new Error(`Invalid leave type: ${type}`);
+    }
 
+    const currentBalance = userInfo[field];
+
+    // Check if the user has sufficient leave balance
+    if (currentBalance < days) {
+      throw new Error(
+        `Insufficient leave balance. Available: ${currentBalance}, Requested: ${days}`
+      );
+    }
+
+    // If validation passes, return true
+    return true;
+  } catch (error) {
+    console.error("Error validating leave:", error.message);
+    throw error;
+  }
+}
+
+// 🔄 Update leave balance when leave is consumed (e.g., accepted by the director)
+async function consumeLeaveBalance(username, days, type) {
+  try {
+    const field = `${type}Leave`;
+
+    // Fetch the user's current leave balance
+    const user = await prisma.user.findFirst({
+      where: { username },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (!user.hasOwnProperty(field)) {
+      throw new Error(`Invalid leave type: ${type}`);
+    }
+
+    const currentBalance = user[field];
+
+    // Check if the user has sufficient leave balance
+    if (currentBalance < days) {
+      throw new Error(
+        `Insufficient leave balance. Available: ${currentBalance}, Requested: ${days}`
+      );
+    }
+
+    // Deduct the leave days from the user's balance
+    const newBalance = currentBalance - days;
+
+    // Update the user's leave balance in the database
     const updatedUser = await prisma.user.update({
-      where: { username: userInfo.username },
+      where: { username },
       data: {
         [field]: newBalance,
       },
@@ -217,8 +288,8 @@ async function updateleaves(userInfo, days, type) {
 
     return updatedUser;
   } catch (error) {
-    console.error("Error updating leave:", error.message);
-    throw error;
+    console.error("Error in consumeLeaveBalance:", error.message);
+    throw new Error("Failed to update leave balance.");
   }
 }
 
@@ -244,5 +315,6 @@ module.exports = {
   getApplications,
   updateStatus,
   updateleaves,
+  consumeLeaveBalance,
   deleteUserByUsername,
 };

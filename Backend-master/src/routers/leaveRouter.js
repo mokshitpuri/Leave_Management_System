@@ -8,6 +8,7 @@ const {
   getApplications,
   updateStatus,
   updateleaves,
+  consumeLeaveBalance,
 } = require("../functions/prismaFunction");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -17,14 +18,18 @@ const prisma = new PrismaClient();
 
 leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
   let username = req.userInfo.username;
-  let stage = req.userInfo.role;
+  let stage = req.userInfo.role === "HOD" ? "DIRECTOR" : req.userInfo.role; // Set stage to "DIRECTOR" if HOD applies
   let status = undefined;
   let rejMessage = undefined;
-  let { type, name, from, to, reqMessage, days } = req.body;
+  let { type, name, from, to, reqMessage } = req.body;
 
-  if (!type || !name || !from || !to || !reqMessage || !days) {
+  if (!type || !name || !from || !to || !reqMessage) {
     return res.status(400).json({ error: { msg: "All fields are required" } });
   }
+
+  // Calculate the number of days for the leave
+  const days =
+    Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
 
   // Check for duplicate leave name
   const existingLeaveByName = await prisma.record.findFirst({
@@ -48,32 +53,15 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
     return res.status(400).json({ error: { msg: "Leave dates overlap with an existing leave" } });
   }
 
-  switch (type) {
-    case "casual":
-      if (req.userInfo.casualLeave < days) {
-        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
-      }
-      break;
-    case "medical":
-      if (req.userInfo.medicalLeave < days) {
-        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
-      }
-      break;
-    case "earned":
-      if (req.userInfo.earnedLeave < days) {
-        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
-      }
-      break;
-    case "academic":
-      if (req.userInfo.academicLeave < days) {
-        return res.status(400).json({ error: { msg: "Not sufficient leaves" } });
-      }
-      break;
-    default:
-      return res.status(400).json({ error: { msg: "Invalid leave type" } });
+  // Validate leave balance
+  try {
+    await updateleaves(req.userInfo, days, type); // Validate leave balance
+  } catch (error) {
+    return res.status(400).json({ error: { msg: error.message } });
   }
 
   try {
+    // Create leave record
     let record = await createRecord({
       username,
       name,
@@ -85,8 +73,6 @@ leaveRouter.post("/apply", authenticate, getUserInfo, async (req, res) => {
       reqMessage,
       rejMessage,
     });
-
-    await updateleaves(req.userInfo, days, type);
 
     res.status(201).json({
       success: true,
@@ -167,6 +153,7 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
   try {
     const { status, name, reason } = req.query;
 
+    // Validate input
     if (!status || (status !== "accepted" && status !== "rejected")) {
       return res.status(400).json({ error: "Invalid status. Use 'accepted' or 'rejected'." });
     }
@@ -182,6 +169,7 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
       return res.status(403).json({ error: "You are not authorized to accept or reject leaves." });
     }
 
+    // Fetch the leave record
     const record = await prisma.record.findFirst({ where: { name } });
 
     if (!record) {
@@ -211,6 +199,21 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
         });
       }
     } else if (req.userInfo.role === "DIRECTOR") {
+      if (status === "accepted") {
+        // Deduct leave balance when approved by DIRECTOR
+        const days =
+          Math.ceil(
+            (new Date(record.to) - new Date(record.from)) / (1000 * 60 * 60 * 24)
+          ) + 1;
+
+        try {
+          await consumeLeaveBalance(record.username, days, record.type);
+        } catch (error) {
+          console.error("Error in consumeLeaveBalance:", error.message);
+          return res.status(500).json({ error: "Failed to update leave balance." });
+        }
+      }
+
       // DIRECTOR can finalize the status
       updatedRecord = await prisma.record.update({
         where: { name },
@@ -223,7 +226,7 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
 
     res.status(200).json({ success: true, updatedRecord });
   } catch (error) {
-    console.error("Error updating leave status:", error);
+    console.error("Error updating leave status:", error.message);
     res.status(500).json({ error: "Internal server error while updating status." });
   }
 });
@@ -262,6 +265,7 @@ leaveRouter.delete("/deleteLeave", authenticate, getUserInfo, async (req, res) =
       return res.status(400).json({ error: "Leave name is required." });
     }
 
+    // Fetch the leave record
     const leave = await prisma.record.findFirst({
       where: { name, username: req.userInfo.username, status: "accepted" },
     });
@@ -270,13 +274,28 @@ leaveRouter.delete("/deleteLeave", authenticate, getUserInfo, async (req, res) =
       return res.status(404).json({ error: "Leave not found or cannot be deleted." });
     }
 
-    // Check if the leave's start date is at least 3 days away
-    const threeDaysBeforeStartDate = new Date(leave.from);
-    threeDaysBeforeStartDate.setDate(threeDaysBeforeStartDate.getDate() - 3);
+    // Calculate the number of days for the leave
+    const days =
+      Math.ceil((new Date(leave.to) - new Date(leave.from)) / (1000 * 60 * 60 * 24)) + 1;
 
-    if (new Date() > threeDaysBeforeStartDate) {
-      return res.status(400).json({ error: "Leave cancellation window is 3 days prior." });
+    // Add back the leave days to the user's balance
+    const field = `${leave.type}Leave`;
+    const user = await prisma.user.findFirst({
+      where: { username: req.userInfo.username },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
     }
+
+    const updatedBalance = user[field] + days;
+
+    await prisma.user.update({
+      where: { username: req.userInfo.username },
+      data: {
+        [field]: updatedBalance,
+      },
+    });
 
     // Delete the leave record
     await prisma.record.delete({

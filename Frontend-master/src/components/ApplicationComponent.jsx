@@ -22,8 +22,15 @@ const ApplicationComponent = ({ data }) => {
   const [error, setError] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: (payload) =>
-      api.get(`/leave/updateStatus?status=${payload.status}&name=${data.name}&reason=${payload.reason || ""}`),
+    mutationFn: (payload) => {
+      const queryParams = new URLSearchParams({
+        status: payload.status,
+        name: data.name,
+        ...(payload.reason && { reason: payload.reason }),
+      }).toString();
+
+      return api.get(`/leave/updateStatus?${queryParams}`);
+    },
     onSuccess: () => {
       toast({
         title: "Success",
@@ -38,6 +45,7 @@ const ApplicationComponent = ({ data }) => {
       }, 1500);
     },
     onError: (error) => {
+      console.error("Error updating leave status:", error.response?.data || error.message);
       toast({
         title: "Failed",
         description: error.response?.data?.error || "Error updating leave status",
