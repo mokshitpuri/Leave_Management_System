@@ -1,121 +1,186 @@
 const { PrismaClient } = require("@prisma/client");
-const { func } = require("joi");
 const prisma = new PrismaClient();
 
+// 🔍 Find user for login
 async function findUser({ username, password }) {
   try {
     const user = await prisma.user.findFirst({
       where: {
-        username: username,
-        password: password,
+        username,
+        password,
       },
     });
-
     return user || null;
   } catch (error) {
-    console.error("Error finding user:", error);
+    console.error("Error finding user:", error.message);
     throw new Error("Database query failed");
   }
 }
 
+// 🧑‍💼 Create new user with duplicate username and full name clash check (case-insensitive)
 async function createUser({ username, password, firstName, lastName, role }) {
-  let newUser = await prisma.user.create({
-    data: {
-      username,
-      password,
-      firstName,
-      lastName,
-      role,
-    },
-  });
+  try {
+    const usernameLower = username.toLowerCase();
+    const fullNameLower = (firstName + lastName).toLowerCase();
 
-  return newUser;
+    // Check if username already exists (case-insensitive)
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    if (existingUser) {
+      throw new Error("Username already exists");
+    }
+
+    // Check if full name and username clash (case-insensitive)
+    const clashUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          {
+            username: {
+              equals: fullNameLower,
+              mode: "insensitive",
+            },
+          },
+          {
+            AND: [
+              { firstName: { equals: firstName, mode: "insensitive" } },
+              { lastName: { equals: lastName, mode: "insensitive" } },
+            ],
+          },
+        ],
+      },
+    });
+
+if (clashUser) {
+  throw new Error(
+    "A user with the same full name already exists. Please choose a different full name or username to avoid conflicts."
+  );
 }
 
+
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        password,
+        firstName,
+        lastName,
+        role,
+        casualLeave: 12,
+        medicalLeave: 10,
+        earnedLeave: 15,
+        academicLeave: 15,
+      },
+    });
+
+    return newUser;
+  } catch (error) {
+    console.error("Error creating user:", error.message);
+    throw error;
+  }
+}
+
+// 📝 Create a new leave record
 async function createRecord(data) {
-  let {
-    username,
-    stage,
-    type,
-    from,
-    to,
-    name,
-    status,
-    reqMessage,
-    rejMessage,
-  } = data;
-  let record = await prisma.record.create({
-    data: {
+  try {
+    const {
       username,
       stage,
       type,
       from,
-      name,
       to,
+      name,
       status,
       reqMessage,
       rejMessage,
-    },
-  });
+    } = data;
 
-  return record;
+    const record = await prisma.record.create({
+      data: {
+        username,
+        stage,
+        type,
+        from,
+        to,
+        name,
+        status,
+        reqMessage,
+        rejMessage,
+      },
+    });
+
+    return record;
+  } catch (error) {
+    console.error("Error creating record:", error.message);
+    throw error;
+  }
 }
 
+// 📄 Get all leave records for a specific user
 async function userLeaves(username) {
   try {
-    let leaves = await prisma.record.findMany({
-      where: {
-        username: username,
-      },
+    const leaves = await prisma.record.findMany({
+      where: { username },
     });
     return leaves;
   } catch (error) {
-    throw new Error(error);
+    console.error("Error fetching user leaves:", error.message);
+    throw error;
   }
 }
 
+// 📥 Get applications at a specific stage (with optional rejected filter)
 async function getApplications(stage, options = {}) {
   try {
     const { excludeRejected } = options;
-    let applications = await prisma.record.findMany({
+
+    const applications = await prisma.record.findMany({
       where: {
         stage,
-        ...(excludeRejected && { status: { not: "rejected" } }), // Exclude rejected leaves if specified
+        ...(excludeRejected && { status: { not: "rejected" } }),
       },
     });
+
     return applications;
   } catch (error) {
-    throw new Error(error);
+    console.error("Error getting applications:", error.message);
+    throw error;
   }
 }
 
+// ✅ Update record status and leave balance
 async function updateStatus(data) {
   try {
     const record = await prisma.record.findFirst({
       where: { name: data.name },
     });
 
-    if (!record) {
-      throw new Error("Record not found");
-    }
+    if (!record) throw new Error("Record not found");
 
+    // Final approval stage, update leave balance
     if (data.stage === "DIRECTOR" && data.status === "accepted") {
-      // Deduct leave days from user's balance
       const user = await prisma.user.findFirst({
         where: { username: record.username },
       });
 
-      const days = Math.ceil((new Date(record.to) - new Date(record.from)) / (1000 * 60 * 60 * 24)) + 1;
+      const days =
+        Math.ceil(
+          (new Date(record.to) - new Date(record.from)) / (1000 * 60 * 60 * 24)
+        ) + 1;
 
-      if (user[`${record.type}Leave`] < days) {
-        throw new Error("Insufficient leave balance");
-      }
-
-      const updatedLeaveBalance = user[`${record.type}Leave`] - days;
+      const balance = user[`${record.type}Leave`] || 0;
+      if (balance < days) throw new Error("Insufficient leave balance");
 
       await prisma.user.update({
         where: { username: record.username },
-        data: { [`${record.type}Leave`]: updatedLeaveBalance },
+        data: {
+          [`${record.type}Leave`]: balance - days,
+        },
       });
     }
 
@@ -131,72 +196,33 @@ async function updateStatus(data) {
     return updatedRecord;
   } catch (error) {
     console.error("Error in updateStatus:", error.message);
-    throw new Error(error);
+    throw error;
   }
 }
 
-
-
+// 🔄 Manually deduct leave days (used if needed outside approval)
 async function updateleaves(userInfo, days, type) {
   try {
-    let updateleave;
-    let updatedDays;
-    switch (type) {
-      case "casual":
-        updatedDays = userInfo.casualLeave - days;
-        updateleave = await prisma.user.update({
-          where: {
-            username: userInfo.username,
-          },
-          data: {
-            casualLeave: updatedDays,
-          },
-        });
-        return updateleave;
-        break;
-      case "medical":
-        updatedDays = userInfo.medicalLeave - days;
-        updateleave = await prisma.user.update({
-          where: {
-            username: userInfo.username,
-          },
-          data: {
-            medicalLeave: updatedDays,
-          },
-        });
-        return updateleave;
-        break;
-      case "earned":
-        updatedDays = userInfo.earnedLeave - days;
-        updateleave = await prisma.user.update({
-          where: {
-            username: userInfo.username,
-          },
-          data: {
-            earnedLeave: updatedDays,
-          },
-        });
-        return updateleave;
-        break;
+    const field = `${type}Leave`;
+    const newBalance = userInfo[field] - days;
 
-      case "academic":
-        updatedDays = userInfo.academicLeave - days;
-        updateleave = await prisma.user.update({
-          where: {
-            username: userInfo.username,
-          },
-          data: {
-            academicLeave: updatedDays,
-          },
-        });
-        return updateleave;
-        break;
-    }
+    if (newBalance < 0) throw new Error("Leave balance cannot be negative");
+
+    const updatedUser = await prisma.user.update({
+      where: { username: userInfo.username },
+      data: {
+        [field]: newBalance,
+      },
+    });
+
+    return updatedUser;
   } catch (error) {
-    throw new Error(error);
+    console.error("Error updating leave:", error.message);
+    throw error;
   }
 }
 
+// Export all functions
 module.exports = {
   findUser,
   createUser,

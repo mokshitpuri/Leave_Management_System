@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-query";
 import RecordsPage from "./pages/RecordsPage";
 import ApplicationPage from "./pages/ApplicationPage";
+import AddUserPage from "./pages/AddUserPage";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: "/dashboard/applications",
         element: <ApplicationPage />,
+      },
+      {
+        path: "/dashboard/add-user",
+        element: <AddUserPage />,
       },
     ],
   },
