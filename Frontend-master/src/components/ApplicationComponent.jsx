@@ -31,11 +31,12 @@ const ApplicationComponent = ({ data }) => {
 
       return api.get(`/leave/updateStatus?${queryParams}`);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      const status = variables.status;
       toast({
-        title: "Success",
-        description: "Leave status updated",
-        status: "success",
+        title: status === "accepted" ? "Accepted" : "Rejected",
+        description: `Leave has been ${status}.`,
+        status: status === "accepted" ? "success" : "error", // Green for accepted, red for rejected
         duration: 1500,
         isClosable: true,
         position: "top-right",

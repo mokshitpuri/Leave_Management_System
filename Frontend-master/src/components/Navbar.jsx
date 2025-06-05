@@ -176,34 +176,6 @@ function Navbar() {
                 </Menu>
               )}
 
-              {/* Reset Leaves Button (Visible for Director only) */}
-              {role === "DIRECTOR" && (
-                <Popover>
-                  <PopoverTrigger>
-                    <Button colorScheme="red" ml={4}>
-                      Reset All Leaves
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <PopoverArrow />
-                    <PopoverCloseButton />
-                    <PopoverHeader fontWeight="bold" fontSize="lg">
-                      Confirm Reset
-                    </PopoverHeader>
-                    <PopoverBody>
-                      <Text fontSize="md" color="black">
-                        Are you sure you want to reset leaves for all users?
-                      </Text>
-                      <Stack direction="row" justifyContent="flex-end" mt="4">
-                        <Button size="sm" onClick={handleResetAllLeaves} colorScheme="red">
-                          Yes, Reset
-                        </Button>
-                      </Stack>
-                    </PopoverBody>
-                  </PopoverContent>
-                </Popover>
-              )}
-
               {/* Apply Leave Button (Visible for HOD and Faculty) */}
               {role !== "DIRECTOR" && (
                 <button

@@ -100,6 +100,33 @@ const ManageUsersPage = () => {
     }
   };
 
+  const handleResetAllLeaves = async () => {
+    try {
+      await api.post("/admin/reset-all-leaves", {
+        casualLeave: 12,
+        earnedLeave: 15,
+        medicalLeave: 10,
+        academicLeave: 15,
+      });
+      toast({
+        title: "Success",
+        description: "Leaves have been reset to default for all users.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      window.location.reload(); // Reload the page after resetting all leaves
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.response?.data?.error || "Failed to reset leaves for all users.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minH="100vh">
@@ -121,9 +148,36 @@ const ManageUsersPage = () => {
 
   return (
     <Box maxW="1200px" mx="auto" p="6">
-      <Heading as="h1" size="lg" textAlign="center" mb="6" color="blue.600">
-        Manage Users
-      </Heading>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb="6">
+        <Heading as="h1" size="lg" color="blue.600">
+          Manage Users
+        </Heading>
+
+        {/* Reset All Leaves Button */}
+        <Popover>
+          <PopoverTrigger>
+            <Button colorScheme="red">Reset All Leaves</Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader fontWeight="bold" fontSize="lg">
+              Confirm Reset
+            </PopoverHeader>
+            <PopoverBody>
+              <Text fontSize="md" color="black">
+                Are you sure you want to reset leaves for <strong>all Users</strong>?
+              </Text>
+              <Stack direction="row" justifyContent="flex-end" mt="4">
+                <Button size="sm" onClick={handleResetAllLeaves} colorScheme="red">
+                  Yes, Reset
+                </Button>
+              </Stack>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </Box>
+
       <SimpleGrid columns={[1, 2, 3]} spacing="6">
         {users.map((user, index) => (
           <Box
