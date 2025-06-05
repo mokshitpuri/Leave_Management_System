@@ -77,7 +77,7 @@ const MedicalLeave = () => {
               moment(values.to).isBetween(leave.from, leave.to, null, "[]") ||
               moment(leave.from).isBetween(values.from, values.to, null, "[]") ||
               moment(leave.to).isBetween(values.from, values.to, null, "[]") ||
-              moment(values.from).isSame(leave.from, "day") || // Single-day overlap
+              moment(values.from).isSame(leave.from, "day") && // Added missing &&
               moment(values.to).isSame(leave.to, "day"))
         );
         if (overlappingLeave) {
@@ -209,6 +209,23 @@ const MedicalLeave = () => {
             }}
             placeholder="Enter the reason for leave (Max 50 words)"
           />
+        </Box>
+
+        <Box>
+          <Button
+            as="a"
+            href={`mailto:director@jaipur.manipal.edu?subject=Medical%20Leave%20Prescription%20for%20${formik.values.from.format(
+              "DD/MM/YYYY"
+            )}%20to%20${formik.values.to.format("DD/MM/YYYY")}`}
+            bg="white" // White background
+            color="blue.500" // Current blue color as text
+            _hover={{ bg: "gray.100" }} // Light gray background on hover
+            border="1px solid"
+            borderColor="blue.500" // Blue border
+            variant="outline"
+          >
+            Mail Prescription / Reports
+          </Button>
         </Box>
 
         <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>
