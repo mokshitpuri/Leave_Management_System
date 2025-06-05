@@ -36,3 +36,23 @@ export async function getApplications() {
       return Promise.reject(error);
     });
 }
+
+export async function deleteLeave(name) {
+  return api
+    .delete(`/leave/deleteLeave`, { params: { name } })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error deleting leave request:", error.message);
+      return Promise.reject(error);
+    });
+}
+
+export async function clearRejectedLeave(name) {
+  return api
+    .delete(`/leave/clearRejectedLeave`, { params: { name } })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error clearing rejected leave:", error.message);
+      return Promise.reject(error);
+    });
+}

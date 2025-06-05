@@ -228,7 +228,6 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
   }
 });
 
-
 leaveRouter.get('/leave-stats', authenticate, getUserInfo, async (req, res) => {
   try {
     let username = req.userInfo.username;
@@ -252,6 +251,70 @@ leaveRouter.get('/leave-stats', authenticate, getUserInfo, async (req, res) => {
       message: "Failed to fetch leave statistics",
       error: error.message
     });
+  }
+});
+
+leaveRouter.delete("/deleteLeave", authenticate, getUserInfo, async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ error: "Leave name is required." });
+    }
+
+    const leave = await prisma.record.findFirst({
+      where: { name, username: req.userInfo.username, status: "accepted" },
+    });
+
+    if (!leave) {
+      return res.status(404).json({ error: "Leave not found or cannot be deleted." });
+    }
+
+    // Check if the leave's start date is at least 3 days away
+    const threeDaysBeforeStartDate = new Date(leave.from);
+    threeDaysBeforeStartDate.setDate(threeDaysBeforeStartDate.getDate() - 3);
+
+    if (new Date() > threeDaysBeforeStartDate) {
+      return res.status(400).json({ error: "Leave cancellation window is 3 days prior." });
+    }
+
+    // Delete the leave record
+    await prisma.record.delete({
+      where: { name },
+    });
+
+    res.status(200).json({ success: true, message: "Leave request canceled successfully." });
+  } catch (error) {
+    console.error("Error canceling leave request:", error.message);
+    res.status(500).json({ error: "Internal server error while canceling leave request." });
+  }
+});
+
+leaveRouter.delete("/clearRejectedLeave", authenticate, getUserInfo, async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ error: "Leave name is required." });
+    }
+
+    const leave = await prisma.record.findFirst({
+      where: { name, username: req.userInfo.username, status: "rejected" },
+    });
+
+    if (!leave) {
+      return res.status(404).json({ error: "Rejected leave not found or cannot be cleared." });
+    }
+
+    // Delete the rejected leave record
+    await prisma.record.delete({
+      where: { name },
+    });
+
+    res.status(200).json({ success: true, message: "Rejected leave cleared successfully." });
+  } catch (error) {
+    console.error("Error clearing rejected leave:", error.message);
+    res.status(500).json({ error: "Internal server error while clearing rejected leave." });
   }
 });
 
