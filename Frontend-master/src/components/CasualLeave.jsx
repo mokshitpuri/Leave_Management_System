@@ -61,6 +61,7 @@ const CasualLeave = () => {
       reqMessage: "",
       type: "casual",
       days: 1,
+      emergencyContact: "",
     },
     onSubmit: async (values) => {
       try {
@@ -178,13 +179,9 @@ const CasualLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={new Date()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+              maxDate={moment().add(maxCasualLeave, "days").toDate()} // Restrict to available casual leaves
+              dateFormat="dd/MM/yyyy"
             />
-            {formik.errors.from && (
-              <Text color="red.500" fontSize="sm">
-                {formik.errors.from}
-              </Text>
-            )}
           </Box>
           <Box>
             <FormLabel fontWeight="bold">To</FormLabel>
@@ -195,11 +192,11 @@ const CasualLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
+              minDate={formik.values.from.toDate()}
               maxDate={moment(formik.values.from)
-                .add(Math.min(maxCasualLeave, 12), "days")
-                .toDate()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+                .add(maxCasualLeave, "days")
+                .toDate()} // Restrict to available casual leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
         </Flex>
@@ -218,6 +215,19 @@ const CasualLeave = () => {
               }
             }}
             placeholder="Enter the reason for leave (Max 50 words)"
+          />
+        </Box>
+
+        <Box>
+          <FormLabel fontWeight="bold">Emergency Contact Number</FormLabel>
+          <Input
+            id="emergencyContact"
+            name="emergencyContact"
+            type="tel"
+            value={formik.values.emergencyContact || ""}
+            onChange={formik.handleChange}
+            placeholder="Enter emergency contact number"
+            isRequired
           />
         </Box>
 

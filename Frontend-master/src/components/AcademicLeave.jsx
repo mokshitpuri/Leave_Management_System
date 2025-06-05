@@ -172,7 +172,8 @@ const AcademicLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={new Date()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+              maxDate={moment().add(Math.min(maxAcademicLeave, 3), "days").toDate()} // Restrict to 3 days or available academic leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
           <Box>
@@ -184,17 +185,17 @@ const AcademicLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
+              minDate={formik.values.from.toDate()}
               maxDate={moment(formik.values.from)
-                .add(Math.min(maxAcademicLeave, 4), "days")
-                .toDate()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+                .add(Math.min(maxAcademicLeave, 3), "days")
+                .toDate()} // Restrict to 3 days or available academic leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
         </Flex>
 
         <Box>
-          <FormLabel fontWeight="bold">Reason </FormLabel>
+          <FormLabel fontWeight="bold">Reason</FormLabel>
           <Textarea
             id="reqMessage"
             name="reqMessage"
@@ -202,11 +203,11 @@ const AcademicLeave = () => {
             value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
-              if (words.length <= 50) {
+              if (words.length <= 100) { // Allow up to 100 words
                 formik.setFieldValue("reqMessage", e.target.value);
               }
             }}
-            placeholder="Enter the reason for leave (Max 50 words)"
+            placeholder="Enter the reason for leave (Max 100 words)"
           />
         </Box>
 

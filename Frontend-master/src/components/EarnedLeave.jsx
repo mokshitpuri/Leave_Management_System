@@ -172,7 +172,8 @@ const EarnedLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={new Date()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+              maxDate={moment().add(Math.min(maxEarnedLeave, 4), "days").toDate()} // Restrict to 4 days or available earned leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
           <Box>
@@ -184,11 +185,11 @@ const EarnedLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
+              minDate={formik.values.from.toDate()}
               maxDate={moment(formik.values.from)
-                .add(maxEarnedLeave, "days")
-                .toDate()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+                .add(Math.min(maxEarnedLeave, 4), "days")
+                .toDate()} // Restrict to 4 days or available earned leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
         </Flex>
@@ -202,11 +203,11 @@ const EarnedLeave = () => {
             value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
-              if (words.length <= 50) {
+              if (words.length <= 100) { // Allow up to 100 words
                 formik.setFieldValue("reqMessage", e.target.value);
               }
             }}
-            placeholder="Enter the reason for leave (Max 50 words)"
+            placeholder="Enter the reason for leave (Max 100 words)"
           />
         </Box>
 

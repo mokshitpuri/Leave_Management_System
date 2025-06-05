@@ -172,8 +172,8 @@ const MedicalLeave = () => {
                 setStartDate(moment(date));
                 formik.setFieldValue("from", moment(date));
               }}
-              minDate={new Date()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+              maxDate={moment().toDate()} // Allow backdated selection
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
           <Box>
@@ -185,11 +185,11 @@ const MedicalLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
+              minDate={formik.values.from.toDate()}
               maxDate={moment(formik.values.from)
-                .add(Math.min(maxMedicalLeave, 10), "days")
-                .toDate()}
-              dateFormat="dd/MM/yyyy" // Corrected date format
+                .add(maxMedicalLeave, "days")
+                .toDate()} // Restrict to available medical leaves
+              dateFormat="dd/MM/yyyy"
             />
           </Box>
         </Flex>
