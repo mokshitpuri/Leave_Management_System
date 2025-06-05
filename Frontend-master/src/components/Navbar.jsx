@@ -117,14 +117,16 @@ function Navbar() {
               )}
 
               <div className="flex items-center gap-6">
-                {/* Apply Leave Button */}
-                <button
-                  className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
-                  style={{ color: "rgb(43, 66, 100)" }}
-                  onClick={() => navigate("/dashboard/apply")}
-                >
-                  Apply Leave
-                </button>
+                {/* Apply Leave Button - Hidden for Director */}
+                {role !== "DIRECTOR" && (
+                  <button
+                    className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
+                    style={{ color: "rgb(43, 66, 100)" }}
+                    onClick={() => navigate("/dashboard/apply")}
+                  >
+                    Apply Leave
+                  </button>
+                )}
 
                 {/* Dropdown for downloading reports - Visible only to DIRECTOR */}
                 {role === "DIRECTOR" && (

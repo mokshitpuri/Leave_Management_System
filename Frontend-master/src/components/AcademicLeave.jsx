@@ -15,8 +15,10 @@ import moment from "moment";
 import { useFormik } from "formik";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const AcademicLeave = () => {
+  const navigate = useNavigate();
   const today = moment();
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
@@ -47,31 +49,9 @@ const AcademicLeave = () => {
         isClosable: true,
         position: "top-right",
       });
-      setTimeout(() => formik.resetForm(), 1000);
+      navigate("/dashboard/home"); // Redirect to homepage on success
     },
   });
-
-  const handleSubmit = async (values, actions) => {
-    if (values.reqMessage.split(/\s+/).length > 50) {
-      toast({
-        title: "Error",
-        description: "Reason must be within 50 words",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
-      return;
-    }
-
-    const payload = {
-      ...values,
-      from: values.from.format(),
-      to: values.to.format(),
-    };
-
-    await mutation.mutate(payload);
-  };
 
   const formik = useFormik({
     initialValues: {
@@ -82,8 +62,78 @@ const AcademicLeave = () => {
       type: "academic",
       days: 1,
     },
-    onSubmit: handleSubmit,
+    onSubmit: async (values) => {
+      try {
+        // Fetch existing leaves
+        const response = await api.get("/leave/getLeaves");
+        const existingLeaves = response.data.body;
+
+        // Check for overlapping dates
+        const overlappingLeave = existingLeaves.find(
+          (leave) =>
+            (leave.status === "accepted" || leave.status === "awaiting") &&
+            (moment(values.from).isBetween(leave.from, leave.to, null, "[]") ||
+              moment(values.to).isBetween(leave.from, leave.to, null, "[]") ||
+              moment(leave.from).isBetween(values.from, values.to, null, "[]") ||
+              moment(leave.to).isBetween(values.from, values.to, null, "[]") ||
+              moment(values.from).isSame(leave.from, "day") || // Single-day overlap
+              moment(values.to).isSame(leave.to, "day"))
+        );
+        if (overlappingLeave) {
+          toast({
+            title: "Error",
+            description: "Dates overlap with an existing leave.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top-right",
+          });
+          return;
+        }
+
+        // Check for duplicate leave name
+        const duplicateName = existingLeaves.find(
+          (leave) => leave.name === values.name
+        );
+        if (duplicateName) {
+          toast({
+            title: "Error",
+            description: "Leave name must be unique.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top-right",
+          });
+          return;
+        }
+
+        // Submit leave if validations pass
+        const payload = {
+          ...values,
+          from: values.from.format(),
+          to: values.to.format(),
+        };
+        await mutation.mutate(payload);
+      } catch (error) {
+        console.error("Error validating leave:", error.message);
+        toast({
+          title: "Error",
+          description: "Failed to validate leave. Please try again.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right",
+        });
+      }
+    },
   });
+
+  useEffect(() => {
+    if (startDate) {
+      setEndDate(startDate); // Default "To" date to the "From" date
+      formik.setFieldValue("to", startDate);
+    }
+  }, [startDate]);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -122,6 +172,7 @@ const AcademicLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={new Date()}
+              dateFormat="dd/MM/yyyy" // Corrected date format
             />
           </Box>
           <Box>
@@ -133,10 +184,11 @@ const AcademicLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()}
+              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
               maxDate={moment(formik.values.from)
                 .add(Math.min(maxAcademicLeave, 4), "days")
                 .toDate()}
+              dateFormat="dd/MM/yyyy" // Corrected date format
             />
           </Box>
         </Flex>

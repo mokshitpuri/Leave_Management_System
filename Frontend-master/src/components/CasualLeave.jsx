@@ -4,12 +4,11 @@ import {
   Input,
   Textarea,
   FormLabel,
-  InputLeftAddon,
-  InputGroup,
   useToast,
   Stack,
   Flex,
   Box,
+  Text,
 } from "@chakra-ui/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -20,17 +19,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 const CasualLeave = () => {
-  const navigate = useNavigate(); // Add useNavigate hook
+  const navigate = useNavigate();
   const [startDate, setStartDate] = useState(moment());
   const [endDate, setEndDate] = useState(moment());
-  const [maxLeaveDays, setMaxLeaveDays] = useState(12);
   const toast = useToast();
 
-  useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("userData"));
-    const remainingLeaves = userData?.CasualLeave || 12;
-    setMaxLeaveDays(Math.min(12, remainingLeaves));
-  }, []);
+  const maxCasualLeave =
+    JSON.parse(localStorage.getItem("userData"))?.casualLeave || 12;
 
   const mutation = useMutation({
     mutationFn: (payload) => api.post("/leave/apply", payload),
@@ -54,43 +49,91 @@ const CasualLeave = () => {
         isClosable: true,
         position: "top-right",
       });
-      navigate("/dashboard/home");
+      navigate("/dashboard/home"); // Redirect to homepage on success
     },
   });
-
-  const handleSubmit = async (values, actions) => {
-    const payload = {
-      ...values,
-      from: values.from.format(),
-      to: values.to.format(),
-    };
-
-    await mutation.mutate(payload);
-  };
 
   const formik = useFormik({
     initialValues: {
       name: "",
       from: startDate,
       to: endDate,
-      message: "",
+      reqMessage: "",
       type: "casual",
-      days: 0,
-      phone: "",
+      days: 1,
     },
-    validate: (values) => {
-      const errors = {};
-      if (!/^\d{10}$/.test(values.phone)) {
-        errors.phone = "Phone number must be exactly 10 digits";
+    onSubmit: async (values) => {
+      try {
+        // Fetch existing leaves
+        const response = await api.get("/leave/getLeaves");
+        const existingLeaves = response.data.body;
+
+        // Check for overlapping dates
+        const overlappingLeave = existingLeaves.find(
+          (leave) =>
+            (leave.status === "accepted" || leave.status === "awaiting") &&
+            (moment(values.from).isBetween(leave.from, leave.to, null, "[]") ||
+              moment(values.to).isBetween(leave.from, leave.to, null, "[]") ||
+              moment(leave.from).isBetween(values.from, values.to, null, "[]") ||
+              moment(leave.to).isBetween(values.from, values.to, null, "[]") ||
+              moment(values.from).isSame(leave.from, "day") || // Single-day overlap
+              moment(values.to).isSame(leave.to, "day"))
+        );
+        if (overlappingLeave) {
+          toast({
+            title: "Error",
+            description: "Dates overlap with an existing leave.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top-right",
+          });
+          return;
+        }
+
+        // Check for duplicate leave name
+        const duplicateName = existingLeaves.find(
+          (leave) => leave.name === values.name
+        );
+        if (duplicateName) {
+          toast({
+            title: "Error",
+            description: "Leave name must be unique.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top-right",
+          });
+          return;
+        }
+
+        // Submit leave if validations pass
+        const payload = {
+          ...values,
+          from: values.from.format(),
+          to: values.to.format(),
+        };
+        await mutation.mutate(payload);
+      } catch (error) {
+        console.error("Error validating leave:", error.message);
+        toast({
+          title: "Error",
+          description: "Failed to validate leave. Please try again.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right",
+        });
       }
-      const wordCount = values.message.trim().split(/\s+/).length;
-      if (wordCount > 100) {
-        errors.message = "Message cannot exceed 100 words";
-      }
-      return errors;
     },
-    onSubmit: handleSubmit,
   });
+
+  useEffect(() => {
+    if (startDate) {
+      setEndDate(startDate); // Default "To" date to the "From" date
+      formik.setFieldValue("to", startDate);
+    }
+  }, [startDate]);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -105,16 +148,23 @@ const CasualLeave = () => {
           <FormLabel fontWeight="bold">Leave Name</FormLabel>
           <Input
             id="name"
+            name="name"
             value={formik.values.name}
             onChange={formik.handleChange}
-            placeholder="Enter unique name"
             isRequired
+            placeholder="Enter unique name"
+            isInvalid={formik.errors.name}
           />
+          {formik.errors.name && (
+            <Text color="red.500" fontSize="sm">
+              {formik.errors.name}
+            </Text>
+          )}
         </Box>
 
         <Box>
           <FormLabel fontWeight="bold">Days</FormLabel>
-          <Input id="days" value={formik.values.days} isReadOnly />
+          <Input id="days" name="days" value={formik.values.days} isReadOnly />
         </Box>
 
         <Flex justify="space-between">
@@ -128,7 +178,13 @@ const CasualLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={new Date()}
+              dateFormat="dd/MM/yyyy" // Corrected date format
             />
+            {formik.errors.from && (
+              <Text color="red.500" fontSize="sm">
+                {formik.errors.from}
+              </Text>
+            )}
           </Box>
           <Box>
             <FormLabel fontWeight="bold">To</FormLabel>
@@ -139,18 +195,17 @@ const CasualLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()}
+              minDate={formik.values.from.toDate()} // Restrict to dates after "From"
               maxDate={moment(formik.values.from)
-                .add(maxLeaveDays - 1, "days")
+                .add(Math.min(maxCasualLeave, 12), "days")
                 .toDate()}
+              dateFormat="dd/MM/yyyy" // Corrected date format
             />
           </Box>
         </Flex>
 
-      
-
         <Box>
-          <FormLabel fontWeight="bold">Reason </FormLabel>
+          <FormLabel fontWeight="bold">Reason</FormLabel>
           <Textarea
             id="reqMessage"
             name="reqMessage"
@@ -158,37 +213,12 @@ const CasualLeave = () => {
             value={formik.values.reqMessage}
             onChange={(e) => {
               const words = e.target.value.trim().split(/\s+/);
-              if (words.length <= 100) {
+              if (words.length <= 50) {
                 formik.setFieldValue("reqMessage", e.target.value);
               }
             }}
-            placeholder="Enter the reason for leave (Max 100 words)"
+            placeholder="Enter the reason for leave (Max 50 words)"
           />
-        </Box>
-
-        <Box>
-          <FormLabel fontWeight="bold">Emergency Contact</FormLabel>
-          <InputGroup>
-            <InputLeftAddon>+91</InputLeftAddon>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="Enter phone number"
-              value={formik.values.phone}
-              onChange={(e) => {
-                const onlyNums = e.target.value.replace(/\D/g, "");
-                if (onlyNums.length <= 10) {
-                  formik.setFieldValue("phone", onlyNums);
-                }
-              }}
-              onBlur={formik.handleBlur}
-              maxLength="10"
-              isInvalid={formik.touched.phone && !!formik.errors.phone}
-            />
-          </InputGroup>
-          {formik.touched.phone && formik.errors.phone && (
-            <p className="text-red-500 text-sm">{formik.errors.phone}</p>
-          )}
         </Box>
 
         <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>

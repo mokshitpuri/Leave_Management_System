@@ -27,7 +27,6 @@ const facultyImages = {
 
 const DEFAULT_IMAGE = "/images/user.png";
 
-// ✅ FIXED: Recharts doesn't pass `coordinate` to CustomTooltip for LineChart
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const leaves = payload[0].payload.leaves;
@@ -109,6 +108,8 @@ const Home = () => {
       </div>
     );
   }
+
+  const isDirector = userData?.role?.toLowerCase() === "director";
 
   const leaveTypes = [
     { name: "Casual Leave", allotted: 12 },
@@ -199,73 +200,78 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Donut Charts */}
-      <div className="flex justify-center flex-wrap gap-6 mt-8">
-        {donutChartData.map((leave, index) => {
-          const pieData = [
-            { name: "Consumed", value: leave.consumed },
-            { name: "Remaining", value: leave.remaining },
-          ];
+      {/* Charts hidden for Director */}
+      {!isDirector && (
+        <>
+          {/* Donut Charts */}
+          <div className="flex justify-center flex-wrap gap-6 mt-8">
+            {donutChartData.map((leave, index) => {
+              const pieData = [
+                { name: "Consumed", value: leave.consumed },
+                { name: "Remaining", value: leave.remaining },
+              ];
 
-          return (
-            <div
-              key={index}
-              className="bg-white p-6 rounded-xl shadow-lg w-64 text-center"
-            >
-              <p className="text-lg font-bold mb-3 text-gray-800">
-                {leave.name}
-              </p>
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  startAngle={90}
-                  endAngle={-270}
-                  dataKey="value"
+              return (
+                <div
+                  key={index}
+                  className="bg-white p-6 rounded-xl shadow-lg w-64 text-center"
                 >
-                  {pieData.map((entry, i) => (
-                    <Cell key={`cell-${i}`} fill={COLORS[i]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-              <div className="flex justify-between mt-2 text-gray-700">
-                <p>
-                  Allotted: <span className="font-bold">{leave.allotted}</span>
-                </p>
-                <p>
-                  Consumed: <span className="font-bold">{leave.consumed}</span>
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  <p className="text-lg font-bold mb-3 text-gray-800">
+                    {leave.name}
+                  </p>
+                  <PieChart width={200} height={200}>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      startAngle={90}
+                      endAngle={-270}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, i) => (
+                        <Cell key={`cell-${i}`} fill={COLORS[i]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                  <div className="flex justify-between mt-2 text-gray-700">
+                    <p>
+                      Allotted: <span className="font-bold">{leave.allotted}</span>
+                    </p>
+                    <p>
+                      Consumed: <span className="font-bold">{leave.consumed}</span>
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Predictive Analysis Line Chart */}
-      <div className="mt-8 p-6 bg-white rounded-xl shadow-xl text-center">
-        <h3 className="text-2xl font-bold text-blue-600">Predictive Analysis</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis
-              label={{ value: "Days", angle: -90, position: "insideLeft" }}
-              allowDecimals={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="totalDays"
-              stroke="#1565C0"
-              activeDot={{ r: 8 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Predictive Analysis Line Chart */}
+          <div className="mt-8 p-6 bg-white rounded-xl shadow-xl text-center">
+            <h3 className="text-2xl font-bold text-blue-600">Predictive Analysis</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis
+                  label={{ value: "Days", angle: -90, position: "insideLeft" }}
+                  allowDecimals={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="totalDays"
+                  stroke="#1565C0"
+                  activeDot={{ r: 8 }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 };
