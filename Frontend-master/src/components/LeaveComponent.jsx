@@ -27,13 +27,13 @@ const LeaveComponent = ({ data }) => {
   };
 
   const stepsFaculty = [
-    { title: "Faculty", description: "Leave submitted" },
-    { title: "HOD", description: "Pending approval" },
+    { title: "Faculty" },
+    { title: "HOD" },
     { title: "Director", description: "Final approval" },
   ];
 
   const stepsHod = [
-    { title: "HOD", description: "Leave submitted" },
+    { title: "HOD" },
     { title: "Director", description: "Final approval" },
   ];
 
@@ -86,6 +86,16 @@ const LeaveComponent = ({ data }) => {
             </Step>
           ))}
         </Stepper>
+
+        {/* Show rejection reason dropdown only if rejected */}
+        {data.status === "rejected" && data.rejMessage && (
+          <Box mt={4} p={3} borderWidth="1px" borderRadius="md" bg="red.50" borderColor="red.300">
+            <Text fontWeight="bold" color="red.600" mb={1}>
+              Rejection Reason:
+            </Text>
+            <Text color="red.700" whiteSpace="pre-wrap">{data.rejMessage}</Text>
+          </Box>
+        )}
       </AccordionPanel>
     </AccordionItem>
   );

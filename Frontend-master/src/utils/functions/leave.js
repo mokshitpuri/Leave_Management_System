@@ -2,7 +2,7 @@ import { api } from "../axios/instance";
 
 export async function leaveRecord() {
   return api
-    .get("/leave/getLeaves", { params: { status: "accepted" } }) // Ensure only accepted leaves are fetched
+    .get("/leave/getLeaves") // fetch all leaves, no status filter
     .then((response) => {
       if (!response.data.body) {
         throw new Error("No leave records found");
@@ -19,9 +19,7 @@ export async function leaveStats() {
   return api
     .get("/leave/leave-stats")
     .then((response) => {
-  
-        return response.data.data;
-      
+      return response.data.data;
     })
     .catch((error) => {
       return Promise.reject(error);

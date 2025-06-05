@@ -74,11 +74,13 @@ async function userLeaves(username) {
   }
 }
 
-async function getApplications(data) {
+async function getApplications(stage, options = {}) {
   try {
+    const { excludeRejected } = options;
     let applications = await prisma.record.findMany({
       where: {
-        stage: data,
+        stage,
+        ...(excludeRejected && { status: { not: "rejected" } }), // Exclude rejected leaves if specified
       },
     });
     return applications;
@@ -132,6 +134,8 @@ async function updateStatus(data) {
     throw new Error(error);
   }
 }
+
+
 
 async function updateleaves(userInfo, days, type) {
   try {

@@ -22,36 +22,36 @@ const ApplicationComponent = ({ data }) => {
   const [error, setError] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: (payload) => {
-      return api.get(`/leave/updateStatus?status=${payload.status}&name=${data.name}&reason=${payload.reason || ""}`);
+    mutationFn: (payload) =>
+      api.get(`/leave/updateStatus?status=${payload.status}&name=${data.name}&reason=${payload.reason || ""}`),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Leave status updated",
+        status: "success",
+        duration: 1500,
+        isClosable: true,
+        position: "top-right",
+      });
+      setTimeout(() => {
+        navigate(0);
+      }, 1500);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed",
+        description: error.response?.data?.error || "Error updating leave status",
+        status: "error",
+        duration: 1500,
+        isClosable: true,
+        position: "top-right",
+      });
     },
   });
 
-  if (mutation.isSuccess) {
-    toast({
-      title: "Success",
-      description: "Leave status updated",
-      status: "success",
-      duration: 1500,
-      isClosable: true,
-      position: "top-right",
-    });
-
-    setTimeout(() => {
-      navigate(0);
-    }, 1500);
-  }
-
-  if (mutation.isError) {
-    toast({
-      title: "Failed",
-      description: "Error updating leave status",
-      status: "error",
-      duration: 1500,
-      isClosable: true,
-      position: "top-right",
-    });
-  }
+  const handleAccept = () => {
+    mutation.mutate({ status: "accepted" });
+  };
 
   const handleReject = () => {
     if (!rejectReason.trim()) {
@@ -88,19 +88,18 @@ const ApplicationComponent = ({ data }) => {
           <p>
             <strong>Type:</strong> {data.type}
           </p>
+          {data.status === "rejected" && (
+            <p>
+              <strong>Rejection Reason:</strong> {data.rejMessage || "No reason provided"}
+            </p>
+          )}
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
-          <Button
-            onClick={() => setShowRejectReason(!showRejectReason)}
-            colorScheme="red"
-          >
+          <Button onClick={() => setShowRejectReason(!showRejectReason)} colorScheme="red">
             Reject
           </Button>
-          <Button
-            onClick={() => mutation.mutate({ status: "accepted" })}
-            colorScheme="green"
-          >
+          <Button onClick={handleAccept} colorScheme="green">
             Accept
           </Button>
         </div>

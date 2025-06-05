@@ -135,11 +135,26 @@ leaveRouter.get("/getApplications", authenticate, getUserInfo, async (req, res) 
       return res.status(403).json({ success: false, msg: "Not authorized for this operation" });
     }
 
-    let applications = role === "HOD" 
-      ? await getApplications("FACULTY") 
-      : role === "DIRECTOR" 
-      ? await getApplications("HOD") 
-      : [];
+    let applications;
+    if (role === "HOD") {
+      // Fetch applications for HOD (leaves submitted by FACULTY and not rejected)
+      applications = await prisma.record.findMany({
+        where: {
+          stage: "FACULTY",
+          status: { not: "rejected" },
+        },
+      });
+    } else if (role === "DIRECTOR") {
+      // Fetch applications for DIRECTOR (leaves accepted by HOD and marked as awaiting)
+      applications = await prisma.record.findMany({
+        where: {
+          stage: "DIRECTOR",
+          status: "awaiting",
+        },
+      });
+    } else {
+      applications = [];
+    }
 
     res.status(200).json({ success: true, body: applications });
   } catch (error) {
@@ -162,13 +177,48 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
       return res.status(400).json({ error: "Rejection reason is required." });
     }
 
+    // Ensure only HOD or DIRECTOR can update the status
+    if (req.userInfo.role !== "HOD" && req.userInfo.role !== "DIRECTOR") {
+      return res.status(403).json({ error: "You are not authorized to accept or reject leaves." });
+    }
+
+    const record = await prisma.record.findFirst({ where: { name } });
+
+    if (!record) {
+      return res.status(404).json({ error: "Leave record not found." });
+    }
+
     let updatedRecord;
+
     if (req.userInfo.role === "HOD") {
-      updatedRecord = await updateStatus({ name, stage: "HOD", status, reason });
+      if (status === "accepted") {
+        // Move to DIRECTOR stage but keep status as 'awaiting'
+        updatedRecord = await prisma.record.update({
+          where: { name },
+          data: {
+            stage: "DIRECTOR",
+            status: "awaiting",
+          },
+        });
+      } else if (status === "rejected") {
+        // Mark as rejected and add rejection reason
+        updatedRecord = await prisma.record.update({
+          where: { name },
+          data: {
+            status: "rejected",
+            rejMessage: reason,
+          },
+        });
+      }
     } else if (req.userInfo.role === "DIRECTOR") {
-      updatedRecord = await updateStatus({ name, stage: "DIRECTOR", status, reason });
-    } else {
-      return res.status(403).json({ error: "Not authorized for this request." });
+      // DIRECTOR can finalize the status
+      updatedRecord = await prisma.record.update({
+        where: { name },
+        data: {
+          status,
+          ...(status === "rejected" && { rejMessage: reason }),
+        },
+      });
     }
 
     res.status(200).json({ success: true, updatedRecord });
@@ -177,6 +227,7 @@ leaveRouter.get("/updateStatus", authenticate, getUserInfo, async (req, res) => 
     res.status(500).json({ error: "Internal server error while updating status." });
   }
 });
+
 
 leaveRouter.get('/leave-stats', authenticate, getUserInfo, async (req, res) => {
   try {
