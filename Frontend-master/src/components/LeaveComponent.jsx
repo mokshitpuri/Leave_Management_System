@@ -64,7 +64,7 @@ const LeaveComponent = ({ data, onCancel, onClear }) => {
     if (new Date() > threeDaysBeforeStartDate) {
       toast({
         title: "Warning",
-        description: "Leave cancellation window is 3 days prior.",
+        description: "Leave must be canceled at least 3 days in advance.",
         status: "error",
         duration: 3000,
         isClosable: true,
