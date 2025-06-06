@@ -167,11 +167,21 @@ function Navbar() {
                     Download Report
                   </MenuButton>
                   <MenuList>
-                    <MenuItem onClick={() => downloadReport("casual")}>Casual Leave</MenuItem>
-                    <MenuItem onClick={() => downloadReport("medical")}>Medical Leave</MenuItem>
-                    <MenuItem onClick={() => downloadReport("academic")}>Academic Leave</MenuItem>
-                    <MenuItem onClick={() => downloadReport("earned")}>Earned Leave</MenuItem>
-                    <MenuItem onClick={() => downloadReport("")}>Full Report</MenuItem>
+                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("casual")}>
+                      Casual Leave
+                    </MenuItem>
+                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("medical")}>
+                      Medical Leave
+                    </MenuItem>
+                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("academic")}>
+                      Academic Leave
+                    </MenuItem>
+                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("earned")}>
+                      Earned Leave
+                    </MenuItem>
+                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("")}>
+                      Full Report
+                    </MenuItem>
                   </MenuList>
                 </Menu>
               )}
