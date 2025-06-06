@@ -25,9 +25,9 @@ function Drawer({ userMenu }) {
       <DrawerContent bg="rgb(43, 66, 100)" color="white">
         <DrawerBody p={0} pt={6}>
           <Box w="full" h="full" p={4}>
-            {userMenu.map((item, index) => (
+            {userMenu.map((item) => (
               <Button
-                key={index}
+                key={item.path}
                 w="full"
                 justifyContent="start"
                 variant="ghost"

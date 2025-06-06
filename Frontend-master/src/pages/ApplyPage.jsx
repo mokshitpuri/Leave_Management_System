@@ -1,6 +1,6 @@
 import React from "react";
 import { 
-  Radio, RadioGroup, Stack, Box, Heading, Card, Divider, Flex 
+  Radio, RadioGroup,Box, Heading, Card, Divider, Flex 
 } from "@chakra-ui/react";
 import CasualLeave from "../components/CasualLeave";
 import MedicalLeave from "../components/MedicalLeave";

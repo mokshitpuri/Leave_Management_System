@@ -35,9 +35,9 @@ const ApplicationPage = () => {
   return (
     <div className="w-full h-full ">
       <Accordion allowMultiple className="p-2 flex flex-col space-y-2">
-        {data.map((leave) => {
-          return <ApplicationComponent data={leave} />;
-        })}
+        {data.map((leave) => (
+          <ApplicationComponent key={leave.id} data={leave} />
+        ))}
       </Accordion>
     </div>
   );

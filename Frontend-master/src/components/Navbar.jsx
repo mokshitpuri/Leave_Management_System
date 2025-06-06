@@ -12,15 +12,7 @@ import {
   MenuItem,
   Button,
   useToast,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverHeader,
-  PopoverBody,
   Stack,
-  Text,
   Input,
   Box,
 } from "@chakra-ui/react";
@@ -33,7 +25,7 @@ function Navbar() {
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const toast = useToast();
   const [nameInput, setNameInput] = useState(""); // State for name input
-  const [isNamePromptOpen, setIsNamePromptOpen] = useState(false); // State to toggle name input prompt
+  
 
   const getRole = () => localStorage.getItem("role");
 

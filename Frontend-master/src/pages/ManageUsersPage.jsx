@@ -179,9 +179,9 @@ const ManageUsersPage = () => {
       </Box>
 
       <SimpleGrid columns={[1, 2, 3]} spacing="6">
-        {users.map((user, index) => (
+        {users.map((user) => (
           <Box
-            key={index}
+            key={user.username}
             p="6"
             borderWidth="1px"
             borderRadius="lg"

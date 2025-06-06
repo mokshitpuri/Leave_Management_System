@@ -5,7 +5,6 @@ import { leaveRecord } from "../utils/functions/leave";
 import {
   Spinner,
   Image,
-  Box,
 } from "@chakra-ui/react";
 import {
   LineChart,
@@ -156,7 +155,7 @@ const Home = () => {
         <>
           {/* Donut Charts */}
           <div className="flex justify-center flex-wrap gap-6 mt-8">
-            {leaveData.map((leave, index) => {
+            {leaveData.map((leave) => {
               const consumed = leave.allotted - leave.remaining;
               const pieData = [
                 { name: "Consumed", value: consumed },
@@ -164,7 +163,7 @@ const Home = () => {
               ];
 
               return (
-                <div key={index} className="bg-gray-100 p-6 rounded-lg shadow-lg w-64 text-center">
+                <div key={leave.name} className="bg-gray-100 p-6 rounded-lg shadow-lg w-64 text-center">
                   <p className="text-lg font-bold mb-3 text-gray-800">{leave.name}</p>
                   <PieChart width={200} height={200}>
                     <Pie
@@ -184,8 +183,12 @@ const Home = () => {
                     <PieTooltip />
                   </PieChart>
                   <div className="flex justify-between mt-2 text-gray-700">
-                    <p>Allotted: <span className="font-bold">{leave.allotted}</span></p>
-                    <p>Consumed: <span className="font-bold">{consumed}</span></p>
+                    <p>
+                      Allotted: <span className="font-bold">{leave.allotted}</span>
+                    </p>
+                    <p>
+                      Consumed: <span className="font-bold">{consumed}</span>
+                    </p>
                   </div>
                 </div>
               );

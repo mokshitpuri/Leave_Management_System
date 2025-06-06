@@ -1,11 +1,11 @@
 -- CreateEnum
-CREATE TYPE "status" AS ENUM ('awaiting', 'accepted', 'rejected');
+CREATE TYPE "Status" AS ENUM ('awaiting', 'accepted', 'rejected');
 
 -- CreateEnum
-CREATE TYPE "stage" AS ENUM ('FACULTY', 'HOD', 'DIRECTOR');
+CREATE TYPE "Stage" AS ENUM ('FACULTY', 'HOD', 'DIRECTOR');
 
 -- CreateEnum
-CREATE TYPE "leaveType" AS ENUM ('causual', 'earned', 'medical', 'academic');
+CREATE TYPE "LeaveType" AS ENUM ('casual', 'earned', 'medical', 'academic');
 
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('FACULTY', 'HOD', 'DIRECTOR');
@@ -31,13 +31,13 @@ CREATE TABLE "Record" (
     "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "stage" "stage" NOT NULL,
-    "type" "leaveType" NOT NULL,
+    "stage" "Stage" NOT NULL,
+    "type" "LeaveType" NOT NULL,
     "from" TIMESTAMP(3) NOT NULL,
     "to" TIMESTAMP(3) NOT NULL,
-    "status" "status" NOT NULL,
-    "reqMessage" TEXT NOT NULL DEFAULT 'applied for leave',
-    "rejMessage" TEXT NOT NULL DEFAULT 'awaiting confimation',
+    "status" "Status" NOT NULL DEFAULT 'awaiting',
+    "reqMessage" TEXT NOT NULL DEFAULT '',
+    "rejMessage" TEXT,
 
     CONSTRAINT "Record_pkey" PRIMARY KEY ("id")
 );

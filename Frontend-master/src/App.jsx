@@ -6,9 +6,6 @@ import Home from "./pages/HomePage";
 import ApplyPage from "./pages/ApplyPage";
 import { Navigate } from "react-router-dom";
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
