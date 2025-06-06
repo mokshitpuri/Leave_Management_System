@@ -9,16 +9,33 @@ const router = express.Router();
 
 router.get("/download-report", async (req, res) => {
   try {
-    const { leaveType } = req.query;
+    const { leaveType, name } = req.query;
 
-    // Fetch only faculty and HOD users (exclude director)
-    const users = await prisma.user.findMany({
-      where: {
-        role: {
-          in: [Role.FACULTY, Role.HOD],
-        },
-      },
-    });
+    const userFilter = name
+      ? {
+          where: {
+            AND: [
+              {
+                firstName: { equals: name.split(" ")[0], mode: "insensitive" },
+              },
+              {
+                lastName: { equals: name.split(" ")[1] || "", mode: "insensitive" },
+              },
+              { role: { in: [Role.FACULTY, Role.HOD] } },
+            ],
+          },
+        }
+      : {
+          where: {
+            role: { in: [Role.FACULTY, Role.HOD] },
+          },
+        };
+
+    const users = await prisma.user.findMany(userFilter);
+
+    if (name && users.length === 0) {
+      return res.status(404).send("No user found with the provided name.");
+    }
 
     const records = await prisma.record.findMany({
       where: {
@@ -31,17 +48,21 @@ router.get("/download-report", async (req, res) => {
 
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=${leaveType || "All"}_Leave_Report.pdf`
+      `attachment; filename=${name || leaveType || "All"}_Leave_Report.pdf`
     );
     res.setHeader("Content-Type", "application/pdf");
 
     doc.pipe(stream);
     stream.pipe(res);
 
-    // Title in uppercase
-    doc.fontSize(22).fillColor("#1565C0").text(`${(leaveType || "All").toUpperCase()} LEAVE REPORT`, {
-      align: "center",
-    });
+    // Report Title
+    doc
+      .fontSize(22)
+      .fillColor("#1565C0")
+      .text(`${(name || leaveType || "All").toUpperCase()} LEAVE REPORT`, {
+        align: "center",
+      });
+
     doc.moveDown(1.5);
 
     const isFullReport = !leaveType;
@@ -50,17 +71,27 @@ router.get("/download-report", async (req, res) => {
       const user = users[i];
       const userRecords = records.filter((r) => r.username === user.username);
 
+      // Add new page only in full report mode after first user
       if (isFullReport && i > 0) {
         doc.addPage();
       }
 
-      // Name and role on left, role uppercase
-      doc.fontSize(16).fillColor("#000").text(`${user.firstName} ${user.lastName}`, {
-        align: "left",
-      });
-      doc.fontSize(12).fillColor("#666").text(user.role.toUpperCase(), {
-        align: "left",
-      });
+      // ✅ Left-aligned user name and role
+      const leftX = doc.page.margins.left;
+      let yPos = doc.y;
+
+      doc
+        .fontSize(16)
+        .fillColor("#000")
+        .text(`${user.firstName} ${user.lastName}`, leftX, yPos);
+
+      yPos = doc.y + 2;
+
+      doc
+        .fontSize(12)
+        .fillColor("#666")
+        .text(user.role.toUpperCase(), leftX, yPos);
+
       doc.moveDown(1);
 
       const leaveTypes = [
@@ -105,7 +136,7 @@ router.get("/download-report", async (req, res) => {
       doc.moveDown(2);
 
       if (isFullReport) {
-        // 📊 Generate bar chart with Y axis from 0 to 8
+        // 📊 Predictive Chart
         const chartX = 60;
         let chartY = doc.y + 10;
         const chartWidth = 400;
@@ -121,28 +152,24 @@ router.get("/download-report", async (req, res) => {
             const to = leave.to ? new Date(leave.to) : from;
             return sum + (Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1);
           }, 0);
-          // Cap max days to maxYValue for chart height normalization
           return days > maxYValue ? maxYValue : days;
         });
 
         const barWidth = chartWidth / 12;
 
-        // Draw Y axis labels from 0 to 8 (step 1)
         doc.fontSize(8).fillColor("#000");
         for (let v = 0; v <= maxYValue; v++) {
           const labelY = chartY + chartHeight - (v / maxYValue) * chartHeight - 4;
           doc.text(v.toString(), chartX - 20, labelY, { width: 15, align: "right" });
-          // Draw horizontal grid line
           doc.moveTo(chartX, chartY + chartHeight - (v / maxYValue) * chartHeight)
              .lineTo(chartX + chartWidth, chartY + chartHeight - (v / maxYValue) * chartHeight)
              .strokeColor("#eee")
              .stroke();
         }
 
-        doc.fontSize(12).fillColor("#000").text("Predective Analysis", chartX, chartY - 20);
+        doc.fontSize(12).fillColor("#000").text("Predictive Analysis", chartX, chartY - 20);
         doc.rect(chartX, chartY, chartWidth, chartHeight).strokeColor("#000").stroke();
 
-        // Bars
         for (let i = 0; i < 12; i++) {
           const barHeight = (monthlyData[i] / maxYValue) * chartHeight;
           const barX = chartX + i * barWidth + 5;
@@ -151,7 +178,6 @@ router.get("/download-report", async (req, res) => {
           doc.rect(barX, barY, barWidth - 8, barHeight).fill("#1565C0");
         }
 
-        // Month labels
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         for (let i = 0; i < 12; i++) {
           const labelX = chartX + i * barWidth + 5;

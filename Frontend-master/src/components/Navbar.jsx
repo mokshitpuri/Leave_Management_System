@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { CiMenuBurger } from "react-icons/ci";
 import { BiLogOut } from "react-icons/bi";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,6 +21,8 @@ import {
   PopoverBody,
   Stack,
   Text,
+  Input,
+  Box,
 } from "@chakra-ui/react";
 import { api } from "../utils/axios/instance"; // Ensure API instance is imported
 
@@ -30,6 +32,8 @@ function Navbar() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const toast = useToast();
+  const [nameInput, setNameInput] = useState(""); // State for name input
+  const [isNamePromptOpen, setIsNamePromptOpen] = useState(false); // State to toggle name input prompt
 
   const getRole = () => localStorage.getItem("role");
 
@@ -54,6 +58,61 @@ function Navbar() {
     } catch (error) {
       console.error("Error downloading the report:", error);
       alert("Failed to download the report. Please try again later.");
+    }
+  };
+
+  const downloadReportByName = async () => {
+    if (!nameInput.trim() || !nameInput.includes(" ")) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid full name (first and last name).",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
+
+    const reportUrl = process.env.REACT_APP_REPORT_URL || "http://localhost:3000/report/download-report";
+
+    try {
+      const response = await fetch(`${reportUrl}?name=${encodeURIComponent(nameInput.trim())}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast({
+            title: "Error",
+            description: "No user found with the provided full name.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "top-right",
+          });
+          return;
+        }
+        throw new Error("Failed to fetch the report.");
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${nameInput.trim()}_Leave_Report.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setNameInput(""); // Clear the input field after download
+    } catch (error) {
+      console.error("Error downloading the report:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download the report. Please try again later.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
     }
   };
 
@@ -166,22 +225,78 @@ function Navbar() {
                   <MenuButton as={Button} colorScheme="blue">
                     Download Report
                   </MenuButton>
-                  <MenuList>
-                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("casual")}>
-                      Casual Leave
+                  <MenuList boxShadow="lg" borderRadius="md" p={2} bg="white">
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("casual")}
+                    >
+                      Casual Leaves
                     </MenuItem>
-                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("medical")}>
-                      Medical Leave
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("medical")}
+                    >
+                      Medical Leaves
                     </MenuItem>
-                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("academic")}>
-                      Academic Leave
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("academic")}
+                    >
+                      Academic Leaves
                     </MenuItem>
-                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("earned")}>
-                      Earned Leave
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("earned")}
+                    >
+                      Earned Leaves
                     </MenuItem>
-                    <MenuItem style={{ color: "black" }} onClick={() => downloadReport("")}>
-                      Full Report
-                    </MenuItem>
+
+                    {/* Name Input and Submit Button */}
+                    <Box p={4} mt={2} borderTop="1px solid #e2e8f0">
+                      <Stack spacing={4}>
+                        <Input
+                          placeholder="Enter name"
+                          value={nameInput}
+                          onChange={(e) => setNameInput(e.target.value)}
+                          color="black"
+                          _placeholder={{ color: "gray.600" }}
+                          borderRadius="md"
+                          boxShadow="sm"
+                        />
+                        <Button
+                          colorScheme="blue"
+                          borderRadius="md"
+                          boxShadow="sm"
+                          onClick={() => downloadReportByName()}
+                        >
+                          Submit
+                        </Button>
+                      </Stack>
+                    </Box>
+
+                    {/* Partition */}
+                    <Box borderTop="1px solid #e2e8f0" my={2} />
+
+                    {/* Full Report Button */}
+                    <Box p={2}>
+                      <Button
+                        bg="gray.300"
+                        color="black"
+                        _hover={{ bg: "gray.400" }}
+                        width="100%"
+                        fontWeight="bold"
+                        textAlign="left"
+                        borderRadius="md"
+                        boxShadow="sm"
+                        onClick={() => downloadReport("")}
+                      >
+                        Full Report
+                      </Button>
+                    </Box>
                   </MenuList>
                 </Menu>
               )}
