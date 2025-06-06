@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const PDFDocument = require("pdfkit");
 const { PassThrough } = require("stream");
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, Role } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -11,11 +11,14 @@ router.get("/download-report", async (req, res) => {
   try {
     const { leaveType } = req.query;
 
-    // Get all users and filter out directors
-    const allUsers = await prisma.user.findMany();
-    const users = allUsers.filter(
-      (user) => user.role.toLowerCase() !== "director"
-    );
+    // Fetch only faculty and HOD users (exclude director)
+    const users = await prisma.user.findMany({
+      where: {
+        role: {
+          in: [Role.FACULTY, Role.HOD],
+        },
+      },
+    });
 
     const records = await prisma.record.findMany({
       where: {
@@ -35,34 +38,31 @@ router.get("/download-report", async (req, res) => {
     doc.pipe(stream);
     stream.pipe(res);
 
-    // Title
-    doc.fontSize(22).fillColor("#1565C0").text(`${leaveType || "All"} Leave Report`, {
+    // Title in uppercase
+    doc.fontSize(22).fillColor("#1565C0").text(`${(leaveType || "All").toUpperCase()} LEAVE REPORT`, {
       align: "center",
     });
-    doc.moveDown(2);
+    doc.moveDown(1.5);
+
+    const isFullReport = !leaveType;
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       const userRecords = records.filter((r) => r.username === user.username);
 
-      // Add new page only for full report
-      if (!leaveType && i !== 0) {
+      if (isFullReport && i > 0) {
         doc.addPage();
       }
 
-      const startX = doc.page.margins.left;
-      let y = doc.y;
+      // Name and role on left, role uppercase
+      doc.fontSize(16).fillColor("#000").text(`${user.firstName} ${user.lastName}`, {
+        align: "left",
+      });
+      doc.fontSize(12).fillColor("#666").text(user.role.toUpperCase(), {
+        align: "left",
+      });
+      doc.moveDown(1);
 
-      // Name and Role (no label)
-      doc.fontSize(16).fillColor("#000").text(`${user.firstName} ${user.lastName}`, startX, y);
-      y += 20;
-      doc.fontSize(12).fillColor("#666").text(user.role, startX, y);
-      y += 10;
-
-      doc.moveTo(startX, y + 10).lineTo(550, y + 10).strokeColor("#ccc").stroke();
-      doc.moveDown(2);
-
-      // Leave Info
       const leaveTypes = [
         { name: "Casual Leave", allotted: 12, remaining: user.casualLeave || 0 },
         { name: "Academic Leave", allotted: 15, remaining: user.academicLeave || 0 },
@@ -76,19 +76,19 @@ router.get("/download-report", async (req, res) => {
           )
         : leaveTypes;
 
-      y = doc.y;
+      const startX = doc.page.margins.left;
+      let y = doc.y;
 
-      // Table header
       doc.fontSize(12).fillColor("#000");
       doc.text("Leave Type", startX, y);
       doc.text("Allotted", startX + 200, y);
       doc.text("Consumed", startX + 300, y);
       doc.text("Remaining", startX + 400, y);
+
       y += 20;
       doc.moveTo(startX, y).lineTo(550, y).strokeColor("#1565C0").stroke();
       y += 10;
 
-      // Table rows
       filteredLeaveTypes.forEach((leave) => {
         const consumed = leave.allotted - leave.remaining;
 
@@ -102,15 +102,15 @@ router.get("/download-report", async (req, res) => {
 
       y += 6;
       doc.moveTo(startX, y).lineTo(550, y).strokeColor("#ccc").stroke();
+      doc.moveDown(2);
 
-      // Graph only for full report
-      if (!leaveType) {
-        doc.moveDown(2);
-
-        const chartX = startX;
-        const chartY = doc.y + 10;
+      if (isFullReport) {
+        // 📊 Generate bar chart with Y axis from 0 to 8
+        const chartX = 60;
+        let chartY = doc.y + 10;
         const chartWidth = 400;
         const chartHeight = 100;
+        const maxYValue = 8;
 
         const monthlyData = Array.from({ length: 12 }, (_, i) => {
           const monthLeaves = userRecords.filter(
@@ -121,23 +121,37 @@ router.get("/download-report", async (req, res) => {
             const to = leave.to ? new Date(leave.to) : from;
             return sum + (Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1);
           }, 0);
-          return days;
+          // Cap max days to maxYValue for chart height normalization
+          return days > maxYValue ? maxYValue : days;
         });
 
-        const maxDays = Math.max(...monthlyData, 1);
         const barWidth = chartWidth / 12;
 
-        doc.fontSize(12).text("Monthly Leave Graph (Days)", chartX, chartY - 20);
-        doc.rect(chartX, chartY, chartWidth, chartHeight).stroke();
+        // Draw Y axis labels from 0 to 8 (step 1)
+        doc.fontSize(8).fillColor("#000");
+        for (let v = 0; v <= maxYValue; v++) {
+          const labelY = chartY + chartHeight - (v / maxYValue) * chartHeight - 4;
+          doc.text(v.toString(), chartX - 20, labelY, { width: 15, align: "right" });
+          // Draw horizontal grid line
+          doc.moveTo(chartX, chartY + chartHeight - (v / maxYValue) * chartHeight)
+             .lineTo(chartX + chartWidth, chartY + chartHeight - (v / maxYValue) * chartHeight)
+             .strokeColor("#eee")
+             .stroke();
+        }
 
+        doc.fontSize(12).fillColor("#000").text("Predective Analysis", chartX, chartY - 20);
+        doc.rect(chartX, chartY, chartWidth, chartHeight).strokeColor("#000").stroke();
+
+        // Bars
         for (let i = 0; i < 12; i++) {
-          const barHeight = (monthlyData[i] / maxDays) * (chartHeight - 10);
+          const barHeight = (monthlyData[i] / maxYValue) * chartHeight;
           const barX = chartX + i * barWidth + 5;
           const barY = chartY + chartHeight - barHeight;
 
           doc.rect(barX, barY, barWidth - 8, barHeight).fill("#1565C0");
         }
 
+        // Month labels
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         for (let i = 0; i < 12; i++) {
           const labelX = chartX + i * barWidth + 5;
@@ -151,8 +165,6 @@ router.get("/download-report", async (req, res) => {
         }
 
         doc.moveDown(6);
-      } else {
-        doc.moveDown(2);
       }
     }
 
