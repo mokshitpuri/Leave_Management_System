@@ -93,7 +93,7 @@ adminRouter.get("/userData", async (req, res) => {
   }
 });
 
-// Reset leaves for all users
+// Reset leaves for all users or a specific user
 adminRouter.post("/reset-leaves", async (req, res) => {
   const { username, casualLeave, earnedLeave, medicalLeave, academicLeave } = req.body;
 

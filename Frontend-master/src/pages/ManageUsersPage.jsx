@@ -102,7 +102,7 @@ const ManageUsersPage = () => {
 
   const handleResetAllLeaves = async () => {
     try {
-      await api.post("/admin/reset-all-leaves", {
+      await api.post("/admin/reset-leaves", {
         casualLeave: 12,
         earnedLeave: 15,
         medicalLeave: 10,
