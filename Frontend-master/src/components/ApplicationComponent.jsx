@@ -12,12 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, useLocation } from "react-router-dom";
 
-const ApplicationComponent = ({ data }) => {
+const ApplicationComponent = ({ data, onStatusUpdate }) => {
   const toast = useToast();
-  const navigate = useNavigate();
-  const location = useLocation(); // Get current path for safe navigation
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [error, setError] = useState(false);
@@ -32,7 +29,7 @@ const ApplicationComponent = ({ data }) => {
 
       return api.get(`/leave/updateStatus?${queryParams}`);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (responseData, variables) => {
       const status = variables.status;
       toast({
         title: status === "accepted" ? "Accepted" : "Rejected",
@@ -42,9 +39,11 @@ const ApplicationComponent = ({ data }) => {
         isClosable: true,
         position: "top-right",
       });
-      setTimeout(() => {
-        navigate(location.pathname); // reload safely without triggering Not Found
-      }, 1500);
+
+      // Remove this leave from UI
+      if (onStatusUpdate) {
+        onStatusUpdate(data.name); // Use unique identifier, change if needed
+      }
     },
     onError: (error) => {
       console.error("Error updating leave status:", error.response?.data || error.message);
