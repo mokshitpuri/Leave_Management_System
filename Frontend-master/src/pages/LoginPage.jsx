@@ -49,8 +49,17 @@ function Login() {
   });
 
   const handleSubmit = (event) => {
-    event.preventDefault();
-    if (email === "" || password === "") return;
+    event.preventDefault(); // Prevent page reload
+    if (email === "" || password === "") {
+      toast({
+        position: "top-right",
+        description: "Please fill in all fields.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
     mutate({ username: email, password: password });
   };
 
