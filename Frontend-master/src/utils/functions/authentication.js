@@ -7,7 +7,7 @@ export function login(payload) {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("username", response.data.username);
       localStorage.setItem("role", response.data.role);
-      return Promise.resolve();
+      return Promise.resolve(response.data);
     })
     .catch((error) => {
       const errorMessage =

@@ -23,8 +23,8 @@ function Login() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => login({ username: email, password: password }),
+  const { mutate, isLoading } = useMutation({
+    mutationFn: login,
     onError: (error) => {
       toast({
         position: "top-right",
@@ -118,7 +118,7 @@ function Login() {
             className="rounded-full p-5 text-xl font-semibold bg-gradient-to-r from-[#E65100] to-[#FF6D00] 
                        text-white hover:from-[#D84315] hover:to-[#F4511E] hover:scale-105 transition-all 
                        duration-300 shadow-lg hover:shadow-xl active:scale-95 w-full"
-            isLoading={isPending}
+            isLoading={isLoading}
             rightIcon={<CgLogIn size={24} />}
           >
             Login
