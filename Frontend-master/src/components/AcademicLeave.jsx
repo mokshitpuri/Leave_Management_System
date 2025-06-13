@@ -176,12 +176,9 @@ const AcademicLeave = () => {
                 setStartDate(moment(date));
                 formik.setFieldValue("from", moment(date));
               }}
-              minDate={new Date()} // Allow selection from today onwards
-              maxDate={moment().add(Math.min(maxAcademicLeave, 3), "days").toDate()} // Restrict to 3 days or available academic leaves
               dateFormat="dd/MM/yyyy"
-              showMonthDropdown // Enable month selection
-              showYearDropdown // Enable year selection
-              dropdownMode="select" // Dropdown mode for month/year
+              showMonthArrow // Enable arrow buttons for month navigation
+              showYearArrow // Enable arrow buttons for year navigation
             />
           </Box>
           <Box>
@@ -198,9 +195,8 @@ const AcademicLeave = () => {
                 .add(Math.min(maxAcademicLeave, 3), "days")
                 .toDate()} // Restrict to 3 days or available academic leaves
               dateFormat="dd/MM/yyyy"
-              showMonthDropdown // Enable month selection
-              showYearDropdown // Enable year selection
-              dropdownMode="select" // Dropdown mode for month/year
+              showMonthArrow // Enable arrow buttons for month navigation
+              showYearArrow // Enable arrow buttons for year navigation
             />
           </Box>
         </Flex>
