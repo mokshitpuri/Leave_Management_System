@@ -12,11 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom"; // Add this import
 
 const ApplicationComponent = ({ data, onStatusUpdate }) => {
   const toast = useToast();
-  const navigate = useNavigate(); // Initialize navigate
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [error, setError] = useState(false);
@@ -42,11 +40,13 @@ const ApplicationComponent = ({ data, onStatusUpdate }) => {
         position: "top-right",
       });
 
-      // Remove this leave from UI and redirect to applications page
+      // Remove this leave from UI
       if (onStatusUpdate) {
         onStatusUpdate(data.name); // Use unique identifier, change if needed
       }
-      navigate("/dashboard/applications"); // Redirect to applications page
+
+      // Reload the page to reflect changes
+      window.location.reload();
     },
     onError: (error) => {
       console.error("Error updating leave status:", error.response?.data || error.message);
