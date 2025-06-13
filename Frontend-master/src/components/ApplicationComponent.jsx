@@ -35,7 +35,7 @@ const ApplicationComponent = ({ data, onStatusUpdate }) => {
         title: status === "accepted" ? "Accepted" : "Rejected",
         description: `Leave has been ${status}.`,
         status: status === "accepted" ? "success" : "error",
-        duration: 1500,
+        duration: 500,
         isClosable: true,
         position: "top-right",
       });
