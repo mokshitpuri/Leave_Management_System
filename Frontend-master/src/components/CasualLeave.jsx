@@ -176,9 +176,12 @@ const CasualLeave = () => {
                 setStartDate(moment(date));
                 formik.setFieldValue("from", moment(date));
               }}
-              minDate={new Date()}
+              minDate={new Date()} // Allow selection from today onwards
               maxDate={moment().add(maxCasualLeave, "days").toDate()} // Restrict to available casual leaves
               dateFormat="dd/MM/yyyy"
+              showMonthDropdown // Enable month selection
+              showYearDropdown // Enable year selection
+              dropdownMode="select" // Dropdown mode for month/year
             />
           </Box>
           <Box>
@@ -190,11 +193,14 @@ const CasualLeave = () => {
                 setEndDate(moment(date));
                 formik.setFieldValue("to", moment(date));
               }}
-              minDate={formik.values.from.toDate()}
+              minDate={formik.values.from.toDate()} // Ensure "To" date is after "From" date
               maxDate={moment(formik.values.from)
                 .add(maxCasualLeave, "days")
                 .toDate()} // Restrict to available casual leaves
               dateFormat="dd/MM/yyyy"
+              showMonthDropdown // Enable month selection
+              showYearDropdown // Enable year selection
+              dropdownMode="select" // Dropdown mode for month/year
             />
           </Box>
         </Flex>
