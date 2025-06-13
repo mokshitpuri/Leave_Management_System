@@ -138,7 +138,7 @@ const MedicalLeave = () => {
 
   useEffect(() => {
     if (startDate && endDate) {
-      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1);
+      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1); // Correct calculation
     }
   }, [startDate, endDate]);
 

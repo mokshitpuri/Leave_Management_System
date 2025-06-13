@@ -28,7 +28,7 @@ function Login() {
     onError: (error) => {
       toast({
         position: "top-right",
-        description: error.message,
+        description: error.message, // Display proper error message
         status: "error",
         duration: 3000,
         isClosable: true,

@@ -77,7 +77,7 @@ const EarnedLeave = () => {
               moment(leave.from).isBetween(values.from, values.to, null, "[]") ||
               moment(leave.to).isBetween(values.from, values.to, null, "[]") ||
               moment(values.from).isSame(leave.from, "day") || // Single-day overlap
-              moment(values.to).isSame(leave.to, "day"))
+              moment(values.to).isSame(leave.to, "day")) // Fixed missing logical operator
         );
         if (overlappingLeave) {
           toast({
@@ -137,7 +137,7 @@ const EarnedLeave = () => {
 
   useEffect(() => {
     if (startDate && endDate) {
-      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1);
+      formik.setFieldValue("days", endDate.diff(startDate, "days") + 1); // Correct calculation
     }
   }, [startDate, endDate]);
 

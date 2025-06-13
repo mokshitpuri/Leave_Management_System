@@ -54,7 +54,7 @@ const ApplicationComponent = ({ data, onStatusUpdate, refetchApplications }) => 
       console.error("Error updating leave status:", error.response?.data || error.message);
       toast({
         title: "Failed",
-        description: error.response?.data?.error || "Error updating leave status",
+        description: error.response?.data?.error?.msg || "Error updating leave status", // Fixed potential undefined error
         status: "error",
         duration: 1500,
         isClosable: true,

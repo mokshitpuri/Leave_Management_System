@@ -10,9 +10,8 @@ export function login(payload) {
       return Promise.resolve();
     })
     .catch((error) => {
-      localStorage.setItem("token", null);
-      localStorage.setItem("username", null);
-      localStorage.setItem("role", null);
-      return Promise.reject(error);
+      const errorMessage =
+        error.response?.data?.msg || "Invalid credentials. Please try again.";
+      return Promise.reject(new Error(errorMessage)); // Return proper error message
     });
 }
