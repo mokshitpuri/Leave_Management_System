@@ -7,12 +7,7 @@ const app = express();
 
 // Middleware setup
 app.use(express.json());
-app.use(cors({
-  origin: "https://leave-front.onrender.com/",
-  methods: ["GET", "POST"],
-  credentials: true
-}));
-
+app.use(cors());
 
 // Register the main router
 app.use("/", router);
