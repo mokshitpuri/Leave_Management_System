@@ -46,7 +46,7 @@ const ApplicationComponent = ({ data, onStatusUpdate }) => {
       if (onStatusUpdate) {
         onStatusUpdate(data.name); // Use unique identifier, change if needed
       }
-      navigate("/applications"); // Redirect to applications page
+      navigate("/dashboard/applications"); // Redirect to applications page
     },
     onError: (error) => {
       console.error("Error updating leave status:", error.response?.data || error.message);
