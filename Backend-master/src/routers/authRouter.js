@@ -28,7 +28,7 @@ authRouter.post("/logIn", async (req, res) => {
         token: token,
       });
     } else {
-      res.status(401).json({ success: false, msg: "Invalid credentials" });
+      res.status(401).json({ success: false, msg: "Invalid credentials. Please check your username and password." });
     }
   } catch (error) {
     console.error("Error during login:", error);
