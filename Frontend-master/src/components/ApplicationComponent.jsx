@@ -12,11 +12,12 @@ import {
 } from "@chakra-ui/react";
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ApplicationComponent = ({ data }) => {
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation(); // Get current path for safe navigation
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [error, setError] = useState(false);
@@ -36,13 +37,13 @@ const ApplicationComponent = ({ data }) => {
       toast({
         title: status === "accepted" ? "Accepted" : "Rejected",
         description: `Leave has been ${status}.`,
-        status: status === "accepted" ? "success" : "error", // Green for accepted, red for rejected
+        status: status === "accepted" ? "success" : "error",
         duration: 1500,
         isClosable: true,
         position: "top-right",
       });
       setTimeout(() => {
-        navigate(0);
+        navigate(location.pathname); // reload safely without triggering Not Found
       }, 1500);
     },
     onError: (error) => {
@@ -82,25 +83,13 @@ const ApplicationComponent = ({ data }) => {
 
       <AccordionPanel className="p-5 bg-white">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
-          <p>
-            <strong>Name:</strong> {data.name}
-          </p>
-          <p>
-            <strong>Request Message:</strong> {data.reqMessage}
-          </p>
-          <p>
-            <strong>From:</strong> {new Date(data.from).toLocaleDateString()}
-          </p>
-          <p>
-            <strong>To:</strong> {new Date(data.to).toLocaleDateString()}
-          </p>
-          <p>
-            <strong>Type:</strong> {data.type}
-          </p>
+          <p><strong>Name:</strong> {data.name}</p>
+          <p><strong>Request Message:</strong> {data.reqMessage}</p>
+          <p><strong>From:</strong> {new Date(data.from).toLocaleDateString()}</p>
+          <p><strong>To:</strong> {new Date(data.to).toLocaleDateString()}</p>
+          <p><strong>Type:</strong> {data.type}</p>
           {data.status === "rejected" && (
-            <p>
-              <strong>Rejection Reason:</strong> {data.rejMessage || "No reason provided"}
-            </p>
+            <p><strong>Rejection Reason:</strong> {data.rejMessage || "No reason provided"}</p>
           )}
         </div>
 
@@ -120,7 +109,7 @@ const ApplicationComponent = ({ data }) => {
               value={rejectReason}
               onChange={(e) => {
                 setRejectReason(e.target.value);
-                setError(false); // Remove error message on input change
+                setError(false);
               }}
               className="mb-2"
             />
