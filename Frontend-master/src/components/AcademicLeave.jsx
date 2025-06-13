@@ -176,6 +176,7 @@ const AcademicLeave = () => {
                 setStartDate(moment(date));
                 formik.setFieldValue("from", moment(date));
               }}
+              minDate={new Date()} // Prevent backdated applications
               dateFormat="dd/MM/yyyy"
               showMonthArrow // Enable arrow buttons for month navigation
               showYearArrow // Enable arrow buttons for year navigation
