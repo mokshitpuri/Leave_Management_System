@@ -13,6 +13,7 @@ import RecordsPage from "./pages/RecordsPage";
 import ApplicationPage from "./pages/ApplicationPage";
 import AddUserPage from "./pages/AddUserPage";
 import ManageUsersPage from "./pages/ManageUsersPage";
+import ApplicationsPage from "./pages/ApplicationsPage"; // Import the applications page component
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <Navigate to="/login" />,
   },
+  {
+    path: "/applications",
+    element: <ApplicationsPage />,
+  }, // Ensure this route exists and points to the correct component
 ]);
 
 const queryClient = new QueryClient();
