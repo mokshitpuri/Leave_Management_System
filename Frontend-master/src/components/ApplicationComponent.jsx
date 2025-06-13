@@ -13,7 +13,7 @@ import {
 import { api } from "../utils/axios/instance";
 import { useMutation } from "@tanstack/react-query";
 
-const ApplicationComponent = ({ data, onStatusUpdate }) => {
+const ApplicationComponent = ({ data, onStatusUpdate, refetchApplications }) => {
   const toast = useToast();
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -45,8 +45,10 @@ const ApplicationComponent = ({ data, onStatusUpdate }) => {
         onStatusUpdate(data.name); // Use unique identifier, change if needed
       }
 
-      // Reload the page to reflect changes
-      window.location.reload();
+      // Refetch leave applications to update the UI
+      if (refetchApplications) {
+        refetchApplications();
+      }
     },
     onError: (error) => {
       console.error("Error updating leave status:", error.response?.data || error.message);
