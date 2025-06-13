@@ -50,7 +50,7 @@ function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault(); // Prevent page reload
-    if (email === "" || password === "") {
+    if (email.trim() === "" || password.trim() === "") {
       toast({
         position: "top-right",
         description: "Please fill in all fields.",
@@ -60,7 +60,7 @@ function Login() {
       });
       return;
     }
-    mutate({ username: email, password: password });
+    mutate({ username: email.trim(), password: password.trim() });
   };
 
   return (
