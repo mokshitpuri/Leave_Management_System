@@ -177,7 +177,7 @@ const MedicalLeave = () => {
                 formik.setFieldValue("from", moment(date));
               }}
               minDate={moment().subtract(100, "years").toDate()} // Allow any backdate applications
-              maxDate={moment().add(3, "days").toDate()} // Allow applications up to 3 days ahead
+              maxDate={moment().toDate()} // Disallow applications ahead of the present date
               dateFormat="dd/MM/yyyy"
               showMonthArrow // Enable arrow buttons for month navigation
               showYearArrow // Enable arrow buttons for year navigation
