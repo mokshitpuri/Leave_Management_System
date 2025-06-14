@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { api } from "../axios/instance";
+import { api } from "../utils/axios/instance"; // Corrected import path
 import {
   Box,
   Heading,
@@ -60,7 +60,7 @@ const ManageUsersPage = () => {
         duration: 3000,
         isClosable: true,
       });
-      window.location.reload(); // Reload the page after deletion
+      setUsers((prevUsers) => prevUsers.filter((user) => user.username !== username)); // Update state instead of reloading
     } catch (err) {
       toast({
         title: "Error",
@@ -88,7 +88,6 @@ const ManageUsersPage = () => {
         duration: 3000,
         isClosable: true,
       });
-      window.location.reload(); // Reload the page after resetting leaves
     } catch (err) {
       toast({
         title: "Error",
@@ -115,7 +114,6 @@ const ManageUsersPage = () => {
         duration: 3000,
         isClosable: true,
       });
-      window.location.reload(); // Reload the page after resetting all leaves
     } catch (err) {
       toast({
         title: "Error",
