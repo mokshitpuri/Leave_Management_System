@@ -14,15 +14,16 @@ import {
   Input,
   Box,
 } from "@chakra-ui/react";
-import { api } from "../utils/axios/instance"; // Ensure API instance is imported
+import DrawerComponent from "./Drawer"; // Import DrawerComponent
+import { api } from "../utils/axios/instance";
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const toast = useToast();
-  const [nameInput, setNameInput] = useState(""); // State for name input
-  
+  const [nameInput, setNameInput] = useState("");
+  const [isDrawerOpen, setDrawerOpen] = useState(false); // State for drawer visibility
 
   const getRole = () => localStorage.getItem("role");
 
@@ -165,9 +166,12 @@ function Navbar() {
         {/* Mobile View */}
         {isMobile ? (
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-4">
-              {/* Removed Drawer toggle button */}
-            </div>
+            <button
+              className="text-white text-2xl"
+              onClick={() => setDrawerOpen(true)}
+            >
+              <CiMenuBurger />
+            </button>
             <div>
               {role === "DIRECTOR" ? (
                 <Menu>
@@ -389,7 +393,12 @@ function Navbar() {
         )}
       </div>
 
-      {/* Removed Drawer for Mobile */}
+      {/* Drawer for Mobile */}
+      <DrawerComponent
+        userMenu={userMenu}
+        isOpen={isDrawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
 
       {/* Spacer below navbar */}
       <div className="h-16"></div>
