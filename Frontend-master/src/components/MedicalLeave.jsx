@@ -88,6 +88,7 @@ const MedicalLeave = () => {
             duration: 3000,
             isClosable: true,
             position: "top-right",
+            containerStyle: { maxWidth: "90vw" },
           });
           return;
         }
@@ -143,7 +144,7 @@ const MedicalLeave = () => {
   }, [startDate, endDate]);
 
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form onSubmit={formik.handleSubmit} className="w-full max-w-full">
       <Stack spacing={4}>
         <Box>
           <FormLabel fontWeight="bold">Leave Name</FormLabel>
@@ -153,6 +154,7 @@ const MedicalLeave = () => {
             value={formik.values.name}
             onChange={formik.handleChange}
             placeholder="Enter unique name"
+            className="w-full"
           />
           {formik.errors.name && formik.touched.name && (
             <Text color="red.500" fontSize="sm">
@@ -166,11 +168,11 @@ const MedicalLeave = () => {
           <Input id="days" name="days" value={formik.values.days} isReadOnly />
         </Box>
 
-        <Flex justify="space-between">
-          <Box>
+        <Flex justify="space-between" flexWrap="wrap" gap={4}>
+          <Box className="w-full sm:w-auto">
             <FormLabel fontWeight="bold">From</FormLabel>
             <DatePicker
-              className="border rounded-md p-2"
+              className="border rounded-md p-2 w-full"
               selected={formik.values.from.toDate()}
               onChange={(date) => {
                 setStartDate(moment(date));
@@ -183,10 +185,10 @@ const MedicalLeave = () => {
               showYearArrow // Enable arrow buttons for year navigation
             />
           </Box>
-          <Box>
+          <Box className="w-full sm:w-auto">
             <FormLabel fontWeight="bold">To</FormLabel>
             <DatePicker
-              className="border rounded-md p-2"
+              className="border rounded-md p-2 w-full"
               selected={formik.values.to.toDate()}
               onChange={(date) => {
                 setEndDate(moment(date));
@@ -221,6 +223,7 @@ const MedicalLeave = () => {
                   duration: 3000,
                   isClosable: true,
                   position: "top-right",
+                  containerStyle: { maxWidth: "90vw" },
                 });
               }
             }}
@@ -250,7 +253,7 @@ const MedicalLeave = () => {
           </Button>
         </Box>
 
-        <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting}>
+        <Button colorScheme="blue" type="submit" isLoading={formik.isSubmitting} className="w-full">
           Submit Request
         </Button>
       </Stack>

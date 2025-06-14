@@ -10,12 +10,13 @@ import {
 } from "@chakra-ui/react";
 import { BiLogOut } from "react-icons/bi";
 import { FaAngleLeft } from "react-icons/fa6";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import DrawerContext from "../context/DrawerContext"; // ✅ Corrected import
 
 function Drawer({ userMenu }) {
   const { open, setOpen } = React.useContext(DrawerContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!userMenu) return null; // Prevents 'undefined' map error
 
@@ -31,7 +32,8 @@ function Drawer({ userMenu }) {
                 w="full"
                 justifyContent="start"
                 variant="ghost"
-                colorScheme="whiteAlpha"
+                colorScheme={location.pathname === item.path ? "white" : "whiteAlpha"}
+                fontWeight={location.pathname === item.path ? "bold" : "normal"}
                 onClick={() => {
                   navigate(item.path);
                   setOpen(false);

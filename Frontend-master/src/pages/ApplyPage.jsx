@@ -13,7 +13,7 @@ const ApplyPage = () => {
   return (
     <Box className="min-h-screen flex flex-col items-center bg-gray-100 py-8 px-4">
       {/* Header Section */}
-      <Card className="shadow-lg rounded-2xl px-8 py-6 w-full max-w-2xl text-center bg-white">
+      <Card className="shadow-lg rounded-2xl px-8 py-6 w-full max-w-full sm:max-w-2xl text-center bg-white">
         <Heading size="md" color="blue.600" pb={4} fontWeight="semibold">
           Select Type of Leave
         </Heading>
@@ -29,7 +29,7 @@ const ApplyPage = () => {
       </Card>
 
       {/* Leave Form Section */}
-      <Box className="w-full max-w-3xl mt-6 bg-white shadow-md rounded-2xl p-6">
+      <Box className="w-full max-w-full sm:max-w-3xl mt-6 bg-white shadow-md rounded-2xl p-6">
         {value === "1" && <CasualLeave />}
         {value === "2" && <AcademicLeave />}
         {value === "3" && <EarnedLeave />}

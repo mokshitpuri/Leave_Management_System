@@ -38,6 +38,7 @@ const ApplicationComponent = ({ data, onStatusUpdate, refetchApplications }) => 
         duration: 1500,
         isClosable: true,
         position: "top-right",
+        containerStyle: { maxWidth: "90vw" },
       });
 
       // Remove this leave from UI
@@ -59,6 +60,7 @@ const ApplicationComponent = ({ data, onStatusUpdate, refetchApplications }) => 
         duration: 1500,
         isClosable: true,
         position: "top-right",
+        containerStyle: { maxWidth: "90vw" },
       });
     },
   });
