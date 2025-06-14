@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import { CiMenuBurger } from "react-icons/ci";
 import { BiLogOut } from "react-icons/bi";
 import { useLocation, useNavigate } from "react-router-dom";
-import DrawerContext from "../context/DrawerContext";
 import { useMediaQuery } from "react-responsive";
-import Drawer from "./Drawer";
 import {
   Menu,
   MenuButton,
@@ -19,7 +17,6 @@ import {
 import { api } from "../utils/axios/instance"; // Ensure API instance is imported
 
 function Navbar() {
-  const { setOpen } = React.useContext(DrawerContext);
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useMediaQuery({ maxWidth: 768 });
@@ -169,16 +166,89 @@ function Navbar() {
         {isMobile ? (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
-              <button
-                className="px-3 py-2 rounded-lg transition"
-                style={{ backgroundColor: "rgba(43, 66, 100, 0.8)" }}
-                onClick={() => setOpen(true)}
-              >
-                <CiMenuBurger size={25} />
-              </button>
+              {/* Removed Drawer toggle button */}
             </div>
             <div>
-              {role !== "DIRECTOR" && (
+              {role === "DIRECTOR" ? (
+                <Menu>
+                  <MenuButton as={Button} colorScheme="blue">
+                    Download Report
+                  </MenuButton>
+                  <MenuList boxShadow="lg" borderRadius="md" p={2} bg="white">
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("casual")}
+                    >
+                      Casual Leaves
+                    </MenuItem>
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("medical")}
+                    >
+                      Medical Leaves
+                    </MenuItem>
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("academic")}
+                    >
+                      Academic Leaves
+                    </MenuItem>
+                    <MenuItem
+                      style={{ color: "black" }}
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => downloadReport("earned")}
+                    >
+                      Earned Leaves
+                    </MenuItem>
+
+                    {/* Name Input and Submit Button */}
+                    <Box p={4} mt={2} borderTop="1px solid #e2e8f0">
+                      <Stack spacing={4}>
+                        <Input
+                          placeholder="Enter name"
+                          value={nameInput}
+                          onChange={(e) => setNameInput(e.target.value)}
+                          color="black"
+                          _placeholder={{ color: "gray.600" }}
+                          borderRadius="md"
+                          boxShadow="sm"
+                        />
+                        <Button
+                          colorScheme="blue"
+                          borderRadius="md"
+                          boxShadow="sm"
+                          onClick={() => downloadReportByName()}
+                        >
+                          Submit
+                        </Button>
+                      </Stack>
+                    </Box>
+
+                    {/* Partition */}
+                    <Box borderTop="1px solid #e2e8f0" my={2} />
+
+                    {/* Full Report Button */}
+                    <Box p={2}>
+                      <Button
+                        bg="gray.300"
+                        color="black"
+                        _hover={{ bg: "gray.400" }}
+                        width="100%"
+                        fontWeight="bold"
+                        textAlign="left"
+                        borderRadius="md"
+                        boxShadow="sm"
+                        onClick={() => downloadReport("")}
+                      >
+                        Full Report
+                      </Button>
+                    </Box>
+                  </MenuList>
+                </Menu>
+              ) : (
                 <button
                   className="bg-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition"
                   style={{ color: "rgb(43, 66, 100)" }}
@@ -319,8 +389,7 @@ function Navbar() {
         )}
       </div>
 
-      {/* Drawer for Mobile */}
-      {isMobile && <Drawer userMenu={userMenu} />}
+      {/* Removed Drawer for Mobile */}
 
       {/* Spacer below navbar */}
       <div className="h-16"></div>

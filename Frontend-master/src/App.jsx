@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/LoginPage";
 import Dashboard from "./pages/DashboardPage";
-import DrawerContextProvider from "./context/DrawerContextProvider";
 import Home from "./pages/HomePage";
 import ApplyPage from "./pages/ApplyPage";
 import { Navigate } from "react-router-dom";
@@ -61,11 +60,9 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <>
-      <DrawerContextProvider>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </DrawerContextProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </>
   );
 }
